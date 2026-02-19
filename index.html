@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaintBall Brasil - Concept Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* Header com efeito de tinta */
+        .header {
+            background: linear-gradient(45deg, #009c3b, #ffdf00, #002776);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 8px solid #ff6b6b;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 20px,
+                rgba(255, 255, 255, 0.1) 20px,
+                rgba(255, 255, 255, 0.1) 40px
+            );
+            animation: paintSplash 20s linear infinite;
+        }
+
+        @keyframes paintSplash {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(50px, 50px) rotate(45deg); }
+        }
+
+        .logo {
+            position: relative;
+            z-index: 2;
+            font-size: 4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-shadow: 4px 4px 0 #ff6b6b, 8px 8px 0 rgba(0, 0, 0, 0.5);
+            letter-spacing: 4px;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo span {
+            display: inline-block;
+            transform: skew(-5deg) rotate(-2deg);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .subtitle {
+            position: relative;
+            z-index: 2;
+            font-size: 1.3rem;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+            background: rgba(0, 0, 0, 0.5);
+            display: inline-block;
+            padding: 0.5rem 2rem;
+            border-radius: 50px;
+            margin-top: 1rem;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Seções */
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            border-color: #ff6b6b;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: #ffdf00;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #ff6b6b;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Grid de personagens */
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .character-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 2px solid #ff6b6b;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,107,107,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .character-card:hover::before {
+            opacity: 1;
+        }
+
+        .character-card:hover {
+            transform: scale(1.05);
+            border-color: #ffdf00;
+            box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+        }
+
+        .character-name {
+            font-size: 1.5rem;
+            color: #ffdf00;
+            margin-bottom: 0.5rem;
+        }
+
+        .character-class {
+            display: inline-block;
+            background: #ff6b6b;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .character-ability {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-style: italic;
+        }
+
+        /* Grid de modos de jogo */
+        .modes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .mode-card {
+            background: rgba(0, 39, 118, 0.5);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid #ff6b6b;
+        }
+
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Grid de mapas */
+        .maps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .map-card {
+            background: linear-gradient(135deg, #1a472a 0%, #2d5a3a 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 2px solid #ffdf00;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        }
+
+        .map-name {
+            position: relative;
+            z-index: 2;
+            font-size: 1.3rem;
+            color: #ffdf00;
+            font-weight: bold;
+        }
+
+        .map-desc {
+            position: relative;
+            z-index: 2;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        /* Estilo de tinta para elementos */
+        .paint-splash {
+            position: relative;
+        }
+
+        .paint-splash::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+            bottom: -20px;
+            right: -20px;
+            opacity: 0.3;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+            border-top: 3px solid #ff6b6b;
+            margin-top: 3rem;
+        }
+
+        .paintball-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #ffdf00;
+            margin-top: 1rem;
+        }
+
+        .paintball-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px #ff6b6b;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1 class="logo">
+            <span>PAINTBALL</span><br>
+            <span style="font-size: 0.7em;">BRASIL</span>
+        </h1>
+        <div class="subtitle">⚡ O Brawl Stars do Paintball Brasileiro ⚡</div>
+    </header>
+
+    <div class="container">
+        <!-- Introdução -->
+        <div class="section">
+            <h2 class="section-title">🎯 O JOGO</h2>
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">
+                Bem-vindo ao <strong>PaintBall Brasil</strong>! Um jogo mobile eletrizante onde você controla jogadores de paintball 
+                em partidas 3x3 rápidas e cheias de tinta. Inspirado no gameplay viciante de Brawl Stars, mas com a alma, 
+                as cores e a ginga brasileira!
+            </p>
+            <p>
+                Troque os lasers por tiros de tinta, os cenários futuristas por campos brasileiros autênticos e prepare-se 
+                para pintar o inimigo. Do Sertão ao Sambódromo, cada partida é uma explosão de cores e estratégia!
+            </p>
+        </div>
+
+        <!-- Personagens -->
+        <div class="section">
+            <h2 class="section-title">🎨 PERSONAGENS (JOGADORES DE PAINTBALL)</h2>
+            <div class="characters-grid">
+                <!-- Zé da Garra -->
+                <div class="character-card">
+                    <h3 class="character-name">Zé da Garra</h3>
+                    <span class="character-class">🏆 TANQUE</span>
+                    <p><strong>Região:</strong> Sul - Gaúcho</p>
+                    <p><strong>Aparência:</strong> Bombacha, gorro de lã, máscara personalizada com a bandeira do Rio Grande do Sul.</p>
+                    <p><strong>Arma:</strong> "Taura Shotgun" - Dispara uma rajada de tinta vermelha em cone.</p>
+                    <div class="character-ability">
+                        <strong>💥 SUPREMO: "Churrasco Explosivo"</strong> - Zé joga uma churrasqueira que explode, causando dano e pintando uma área gigante de vermelho.
+                    </div>
+                </div>
+
+                <!-- Carol do Nordeste -->
+                <div class="character-card">
+                    <h3 class="character-name">Carol da Praia</h3>
+                    <span class="character-class">🎯 ATIRADORA</span>
+                    <p><strong>Região:</strong> Nordeste - Cearense</p>
+                    <p><strong>Aparência:</strong> Biquíni estiloso, canga, colete de paintball colorido e máscara com fitas de sertanejo.</p>
+                    <p><strong>Arma:</strong> "Estilingue de Tinta" - Tiros de longo alcance com tinta azul turquesa.</p>
+                    <div class="character-ability">
+                        <strong>💥 SUPREMO: "Onda de Tinta"</strong> - Carol invoca uma onda gigante que empurra inimigos e pinta o chão por onde passa.
+                    </div>
+                </div>
+
+                <!-- MC Tintinha -->
+                <div class="character-card">
+                    <h3 class="character-name">MC Tintinha</h3>
+                    <span class="character-class">🎤 SUPORTE</span>
+                    <p><strong>Região:</strong> Sudeste - Funkeiro</p>
+                    <p><strong>Aparência:</strong> Cordões de ouro, boné de lado, máscara com estampa de onça e colete fluorescente.</p>
+                    <p><strong>Arma:</strong> "Caixa de Som" - Dispara ondas sonoras que curam aliados e danificam inimigos.</p>
+                    <div class="character-ability">
+                        <strong>💥 SUPREMO: "Passinho do Tinta"</strong> - Cria uma área que dá velocidade de movimento e recarrega a tinta dos aliados mais rápido.
+                    </div>
+                </div>
+
+                <!-- Cabo Cláudio -->
+                <div class="character-card">
+                    <h3 class="character-name">Cabo Cláudio</h3>
+                    <span class="character-class">🔫 CONTROLE</span>
+                    <p><strong>Região:</strong> Centro-Oeste - Pantaneiro</p>
+                    <p><strong>Aparência:</strong> Chapéu de cowboy, colete camuflado verde e máscara estilo militar.</p>
+                    <p><strong>Arma:</strong> "Tinta Pantaneira" - Metralhadora de tinta verde com alta cadência.</p>
+                    <div class="character-ability">
+                        <strong>💥 SUPREMO: "Armadilha de Tinta"</strong> - Espalha minas de tinta pelo chão que explodem quando inimigos pisam, deixando-os lentos.
+                    </div>
+                </div>
+
+                <!-- Mana Cecília -->
+                <div class="character-card">
+                    <h3 class="character-name">Mana Cecília</h3>
+                    <span class="character-class">✨ MÍSTICA</span>
+                    <p><strong>Região:</strong> Norte - Amazônida</p>
+                    <p><strong>Aparência:</strong> Pinturas indígenas, cocar adaptado como máscara, colete de fibras naturais.</p>
+                    <p><strong>Arma:</strong> "Arco-Íris da Floresta" - Flechas de tinta colorida que causam dano ao longo do tempo.</p>
+                    <div class="character-ability">
+                        <strong>💥 SUPREMO: "Espírito da Mata"</strong> - Invoca uma área de cura que também camufla aliados (ficam invisíveis).
+                    </div>
+                </div>
+
+                <!-- Tio Chico -->
+                <div class="character-card">
+                    <h3 class="character-name">Tio Chico</h3>
+                    <span class="character-class">🍖 PESADO</span>
+                    <p><strong>Região:</strong> Sudeste - Mineiro</p>
+                    <p><strong>Aparência:</strong> Chapéu de palha, bigode, avental de açougueiro adaptado com proteções.</p>
+                    <p><strong>Arma:</strong> "Panelão de Tinta" - Joga panelas de tinta que quicam nas paredes.</p>
+                    <div class="character-ability">
+                        <strong>💥 SUPREMO: "Pão de Queijo"</strong> - Cria barricadas de pão de queijo gigantes que servem como cobertura e curam quem estiver perto.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modos de Jogo -->
+        <div class="section">
+            <h2 class="section-title">🎮 MODOS DE JOGO</h2>
+            <div class="modes-grid">
+                <div class="mode-card">
+                    <div class="mode-icon">🏆</div>
+                    <h3 style="color: #ffdf00;">Paintball</h3>
+                    <p>Dispute um Pote de Tinta Gigante! Leve o pote até a base inimiga enquanto seu time protege e ataca.</p>
+                </div>
+                <div class="mode-card">
+                    <div class="mode-icon">💀</div>
+                    <h3 style="color: #ffdf00;">Mata-Mata</h3>
+                    <p>Battle Royale solo ou dupla. A zona de segurança (lona) vai fechando. Sobreviva e seja o último!</p>
+                </div>
+                <div class="mode-card">
+                    <div class="mode-icon">🎯</div>
+                    <h3 style="color: #ffdf00;">Zona de Pintura</h3>
+                    <p>Controle áreas pintando-as com a cor do seu time. Mais área pintada = mais pontos!</p>
+                </div>
+                <div class="mode-card">
+                    <div class="mode-icon">🎈</div>
+                    <h3 style="color: #ffdf00;">Caça aos Balões</h3>
+                    <p>Cada inimigo carrega balões de tinta. Elimine-os para coletar e marcar pontos. Não deixe eles te pegarem!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cenários -->
+        <div class="section">
+            <h2 class="section-title">🗺️ CENÁRIOS BRASILEIROS</h2>
+            <div class="maps-grid">
+                <div class="map-card" style="background-image: linear-gradient(135deg, #ffdf00 0%, #ff6b6b 100%);">
+                    <div class="map-name">Sambódromo da Tinta</div>
+                    <div class="map-desc">Longo e simétrico. Muitas paredes finas (obstáculos de madeira) e arquibancadas coloridas.</div>
+                </div>
+                <div class="map-card" style="background-image: linear-gradient(135deg, #2a2a2a 0%, #4a4a4a 100%);">
+                    <div class="map-name">Favela Vertical</div>
+                    <div class="map-desc">Múltiplos níveis com escadas e vielas. Caixas d'água e lajes como cobertura.</div>
+                </div>
+                <div class="map-card" style="background-image: linear-gradient(135deg, #009c3b 0%, #002776 100%);">
+                    <div class="map-name">Praia de Copacabana</div>
+                    <div class="map-desc">Mapa aberto na areia, quiosques como cobertura e o calçadão ao fundo.</div>
+                </div>
+                <div class="map-card" style="background-image: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);">
+                    <div class="map-name">Sertão Árido</div>
+                    <div class="map-desc">Vegetação seca (caatinga) e rochas como obstáculos. Pouca cobertura, tiro certeiro!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progressão -->
+        <div class="section">
+            <h2 class="section-title">📦 PROGRESSÃO</h2>
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+                <div style="text-align: center; flex: 1; min-width: 200px;">
+                    <div style="font-size: 3rem;">🎨</div>
+                    <h3 style="color: #ffdf00;">Latas de Tinta</h3>
+                    <p>Nossos "baús"! Abra latas de tinta para ganhar novas cores, camuflagens para marcadores e acessórios para os personagens.</p>
+                </div>
+                <div style="text-align: center; flex: 1; min-width: 200px;">
+                    <div style="font-size: 3rem;">⭐</div>
+                    <h3 style="color: #ffdf00;">Passe do Paintball</h3>
+                    <p>Passe de batalha com skins temáticas exclusivas: Carnaval, Gaúcho, Nordestino, Sertanejo e muito mais!</p>
+                </div>
+                <div style="text-align: center; flex: 1; min-width: 200px;">
+                    <div style="font-size: 3rem;">🔫</div>
+                    <h3 style="color: #ffdf00;">Personalização</h3>
+                    <p>Monte seu marcador, escolha suas cores e crie seu estilo único nas arenas.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chamada para ação -->
+        <div style="text-align: center; margin: 3rem 0;">
+            <button class="paintball-btn" onclick="alert('PaintBall Brasil - Em breve nas lojas! Prepare sua máscara e suas tintas! 🎨🔫')">
+                🎮 PRÉ-REGISTRE-SE AGORA
+            </button>
+            <p style="margin-top: 1rem; color: #888;">Disponível em breve para iOS e Android</p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p style="margin-bottom: 1rem;">© 2024 PaintBall Brasil - Um jogo 100% brasileiro, feito com tinta e coração 💚💛💙</p>
+        <p style="color: #888; font-size: 0.9rem;">Inspirado em Brawl Stars, mas com a nossa cara! Siga @paintballbrasil</p>
+    </footer>
+
+    <script>
+        // Adiciona efeito de respingos de tinta ao passar o mouse nos cards
+        document.querySelectorAll('.character-card, .mode-card, .map-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'scale(1.02)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
