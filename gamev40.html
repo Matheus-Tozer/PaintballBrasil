@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaintBall Brasil</title>
+    <style>
+        /* (mesmo estilo - omitido por brevidade, mas deve ser mantido) */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border-left: 5px solid #ffdf00;
+            z-index: 100;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+        
+        #info h1 {
+            margin: 0;
+            color: #ffdf00;
+            text-shadow: 2px 2px 0 #ff6b6b;
+            font-size: 1.8rem;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: 2px solid #ff6b6b;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            display: flex;
+            gap: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .control-key {
+            background: #333;
+            padding: 4px 10px;
+            border-radius: 5px;
+            border: 1px solid #ffdf00;
+            color: #ffdf00;
+            font-weight: bold;
+        }
+        
+        #health-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid #ff6b6b;
+            z-index: 100;
+            min-width: 200px;
+        }
+        
+        #ammo {
+            position: absolute;
+            bottom: 120px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid #ffdf00;
+            z-index: 100;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ffdf00;
+            border-radius: 50%;
+            z-index: 50;
+            pointer-events: none;
+            box-shadow: 0 0 10px #ff6b6b;
+        }
+        
+        #crosshair::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border-radius: 50%;
+        }
+        
+        #score {
+            display: none;
+        }
+        
+        #debug-info {
+            position: absolute;
+            bottom: 120px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 1000;
+            border: 1px solid #ffdf00;
+            display: none;
+        }
+        
+        #team-stats {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            border: 2px solid #ffdf00;
+            z-index: 100;
+            min-width: 220px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .team-green {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .team-pink {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .player-list {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 3px 5px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        #pointer-warning {
+            position: absolute;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            z-index: 200;
+            display: none;
+        }
+
+        #victory-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: #ffdf00;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 3rem;
+            font-weight: bold;
+            border: 4px solid #ff6b6b;
+            z-index: 300;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255,223,0,0.5);
+        }
+
+        #restart-button {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 400;
+            font-weight: bold;
+            border: 2px solid #ffdf00;
+            transition: transform 0.2s;
+        }
+
+        #restart-button:hover {
+            transform: scale(1.1);
+            background: #ff4444;
+        }
+
+        #death-message {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: #ff6b6b;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            border: 2px solid #ffdf00;
+            z-index: 350;
+            display: none;
+            text-align: center;
+        }
+
+        #spectator-hint {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.65);
+            color: #cccccc;
+            padding: 8px 22px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 350;
+            display: none;
+            pointer-events: none;
+        }
+
+        /* ===== TELA DE MENU ===== */
+        #menu-screen {
+            position: fixed; inset: 0;
+            background: linear-gradient(160deg, #0a1a0a 0%, #0d1120 50%, #0a1a0a 100%);
+            z-index: 2000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .menu-logo {
+            font-size: 3.6rem; font-weight: 900; color: #ffdf00;
+            text-shadow: 3px 3px 0 #ff6b6b, 6px 6px 0 #009c3b;
+            letter-spacing: 3px; margin-bottom: 4px;
+        }
+        .menu-sub { color: #888; font-size: 1rem; margin-bottom: 48px; letter-spacing: 2px; }
+        .menu-label {
+            color: #ffdf00; font-size: 1rem; font-weight: bold;
+            margin-bottom: 22px; letter-spacing: 3px; text-transform: uppercase;
+        }
+        .mode-cards { display: flex; gap: 28px; margin-bottom: 44px; }
+        .mode-card {
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,223,0,0.25);
+            border-radius: 18px; padding: 28px 36px;
+            cursor: pointer; text-align: center;
+            transition: all 0.18s ease; min-width: 190px; user-select: none;
+        }
+        .mode-card:hover {
+            border-color: #ffdf00; background: rgba(255,223,0,0.07);
+            transform: translateY(-5px); box-shadow: 0 14px 40px rgba(255,223,0,0.18);
+        }
+        .mode-card.selected {
+            border-color: #ffdf00; background: rgba(255,223,0,0.11);
+            box-shadow: 0 0 32px rgba(255,223,0,0.28); transform: translateY(-5px);
+        }
+        .mode-icon  { font-size: 2.8rem; margin-bottom: 10px; }
+        .mode-title { font-size: 2.4rem; font-weight: 900; color: #ffdf00; margin-bottom: 8px; }
+        .mode-desc  { color: #bbb; font-size: 0.9rem; line-height: 1.55; }
+        .mode-tag   {
+            display: inline-block; margin-top: 12px; padding: 3px 12px;
+            border-radius: 20px; font-size: 0.78rem; font-weight: bold;
+        }
+        .tag-normal { background: rgba(0,156,59,0.2);  color: #00ee88; border: 1px solid #009c3b; }
+        .tag-big    { background: rgba(255,107,107,0.2); color: #ff9999; border: 1px solid #ff6b6b; }
+        .play-btn {
+            background: linear-gradient(135deg, #ffdf00, #ff9900);
+            color: #000; border: none; padding: 17px 58px;
+            font-size: 1.35rem; font-weight: 900; border-radius: 50px;
+            cursor: pointer; letter-spacing: 2px; transition: all 0.18s;
+            box-shadow: 0 6px 28px rgba(255,223,0,0.38);
+        }
+        .play-btn:hover { transform: scale(1.07); box-shadow: 0 10px 40px rgba(255,223,0,0.55); }
+        .menu-footer { margin-top: 28px; color: #444; font-size: 0.82rem; }
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen">
+        <div class="menu-logo">🎨 PAINTBALL BRASIL</div>
+        <div class="menu-sub">Sambódromo da Tinta</div>
+        <div class="menu-label">Selecione o Modo de Jogo</div>
+        <div class="mode-cards">
+            <div class="mode-card selected" id="card-3x3" onclick="selectMode('3x3')">
+                <div class="mode-icon">⚡</div>
+                <div class="mode-title">3 × 3</div>
+                <div class="mode-desc">Você + 2 aliados<br>vs 3 inimigos</div>
+                <div class="mode-tag tag-normal">MAPA PADRÃO</div>
+            </div>
+            <div class="mode-card" id="card-5x5" onclick="selectMode('5x5')">
+                <div class="mode-icon">🔥</div>
+                <div class="mode-title">5 × 5</div>
+                <div class="mode-desc">Você + 4 aliados<br>vs 5 inimigos</div>
+                <div class="mode-tag tag-big">MAPA DUPLO</div>
+            </div>
+        </div>
+        <button class="play-btn" onclick="startGame()">▶ JOGAR</button>
+        <div class="menu-footer">WASD para mover • Mouse para mirar • Click para atirar • R recarregar</div>
+    </div>
+
+    <div id="info">
+        <h1>🎨 PAINTBALL BRASIL</h1>
+        <p id="info-mode-text">Sambódromo da Tinta • Verde (você + 2) vs Rosa (3)</p>
+    </div>
+    
+    <div id="score">
+        <span style="color: #009c3b;">🟢 VERDE: <span id="green-score">0</span></span>
+        <span style="color: #ff6b6b;">🔴 ROSA: <span id="pink-score">0</span></span>
+    </div>
+    
+    <div id="team-stats">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #ffdf00; padding-bottom: 5px;">
+            <span class="team-green" id="team-green-label">🟢 TIME VERDE (você + 2)</span>
+            <span class="team-pink" id="team-pink-label">🔴 TIME ROSA (3)</span>
+        </div>
+        <div class="player-list" id="team-players">
+            </div>
+        <div style="margin-top: 10px; text-align: center; font-size: 12px; color: #aaa;">
+            Elimine todos os inimigos para vencer
+        </div>
+    </div>
+    
+    <div id="health-bar">
+        <div style="color: white; margin-bottom: 5px;">❤️ User 1</div>
+        <div style="width: 100%; height: 15px; background: #333; border-radius: 10px; overflow: hidden;">
+            <div id="health-fill" style="height: 100%; width: 100%; background: linear-gradient(90deg, #00ff00, #009c3b); border-radius: 10px;"></div>
+        </div>
+        <div id="player-health-text" style="color: white; font-size: 0.9rem; margin-top: 5px;">Vida: 3</div>
+    </div>
+    
+    <div id="ammo">
+        🔫 <span id="ammo-count">10/10</span>
+    </div>
+    
+    <div id="crosshair"></div>
+    
+    <div id="controls">
+        <div><span class="control-key">WASD</span> Andar</div>
+        <div><span class="control-key">MOUSE</span> Mirar</div>
+        <div><span class="control-key">CLICK</span> Atirar</div>
+        <div><span class="control-key">R</span> Recarregar</div>
+        <div><span class="control-key">ESPACO</span> Pular</div>
+    </div>
+    
+    <div id="debug-info">
+        🎮 POS: <span id="debug-pos">0, 0, 0</span> | VEL: <span id="debug-vel">0, 0, 0</span><br>
+        🏃 MOV: <span id="debug-move">PARADO</span> | 📍 CHÃO: <span id="debug-ground">SIM</span>
+    </div>
+
+    <div id="pointer-warning">
+        ⚠️ Clique na tela para travar o mouse e andar
+    </div>
+
+    <div id="victory-message"></div>
+    <div id="death-message">💀 VOCÊ FOI ELIMINADO 💀</div>
+    <div id="spectator-hint">👁️ MODO ESPECTADOR — mova o mouse para olhar ao redor</div>
+    <button id="restart-button">🔄 Reiniciar Partida</button>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script>
+        // Menu logic (non-module so onclick works)
+        let selectedMode = '3x3';
+        function selectMode(mode) {
+            selectedMode = mode;
+            document.getElementById('card-3x3').classList.toggle('selected', mode === '3x3');
+            document.getElementById('card-5x5').classList.toggle('selected', mode === '5x5');
+        }
+        function startGame() {
+            document.getElementById('menu-screen').style.display = 'none';
+            window._gameMode = selectedMode;
+            // Update UI labels
+            if (selectedMode === '5x5') {
+                document.getElementById('info-mode-text').textContent = 'Sambódromo da Tinta • Verde (você + 4) vs Rosa (5)';
+                document.getElementById('team-green-label').textContent = '🟢 TIME VERDE (você + 4)';
+                document.getElementById('team-pink-label').textContent = '🔴 TIME ROSA (5)';
+            }
+            window._startGameCallback && window._startGameCallback();
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- CONFIGURAÇÃO INICIAL ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x7a9e7e);
+        scene.fog = new THREE.Fog(0x7a9e7e, 30, 70);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.8, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.autoClear = false;
+        document.body.appendChild(renderer.domElement);
+
+        // --- CENA E CÂMERA DA ARMA FPS ---
+        const weaponScene = new THREE.Scene();
+        const weaponCamera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.01, 20);
+
+        const weaponAmbient = new THREE.AmbientLight(0xffffff, 1.4);
+        weaponScene.add(weaponAmbient);
+        const weaponDirLight = new THREE.DirectionalLight(0xfff5d1, 1.0);
+        weaponDirLight.position.set(1, 2, 1);
+        weaponScene.add(weaponDirLight);
+
+        // --- ARMA FPS (mão direita na tela) ---
+        const fpsWeaponGroup = new THREE.Group();
+
+        // Braço / manga verde
+        const sleeveGeo = new THREE.BoxGeometry(0.13, 0.28, 0.13);
+        const sleeveMat = new THREE.MeshStandardMaterial({ color: 0x009c3b });
+        const sleeveMesh = new THREE.Mesh(sleeveGeo, sleeveMat);
+        sleeveMesh.position.set(0, 0.05, 0);
+        fpsWeaponGroup.add(sleeveMesh);
+
+        // Mão
+        const handGeo = new THREE.BoxGeometry(0.11, 0.13, 0.11);
+        const handMat = new THREE.MeshStandardMaterial({ color: 0xffaa88 });
+        const handMesh = new THREE.Mesh(handGeo, handMat);
+        handMesh.position.set(0, -0.09, 0);
+        fpsWeaponGroup.add(handMesh);
+
+        // Corpo principal do marker FPS
+        const fpsMarkerGroup = new THREE.Group();
+
+        const fpsBodyGeo = new THREE.BoxGeometry(0.085, 0.11, 0.62);
+        const fpsBodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.4, metalness: 0.8 });
+        fpsMarkerGroup.add(new THREE.Mesh(fpsBodyGeo, fpsBodyMat));
+
+        // Cano
+        const fpsBarrelGeo = new THREE.CylinderGeometry(0.026, 0.026, 0.62, 10);
+        const fpsBarrelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.95, roughness: 0.15 });
+        const fpsBarrelMesh = new THREE.Mesh(fpsBarrelGeo, fpsBarrelMat);
+        fpsBarrelMesh.rotation.x = Math.PI / 2;
+        fpsBarrelMesh.position.set(0, 0.025, -0.56);
+        fpsMarkerGroup.add(fpsBarrelMesh);
+
+        // Boca do cano
+        const muzzleGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.04, 10);
+        const muzzleMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 1.0, roughness: 0.1 });
+        const muzzleMesh = new THREE.Mesh(muzzleGeo, muzzleMat);
+        muzzleMesh.rotation.x = Math.PI / 2;
+        muzzleMesh.position.set(0, 0.025, -0.89);
+        fpsMarkerGroup.add(muzzleMesh);
+
+        // Cabo (grip)
+        const fpsGripGeo = new THREE.BoxGeometry(0.075, 0.22, 0.09);
+        const fpsGripMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
+        const fpsGripMesh = new THREE.Mesh(fpsGripGeo, fpsGripMat);
+        fpsGripMesh.position.set(0, -0.15, 0.12);
+        fpsGripMesh.rotation.x = 0.28;
+        fpsMarkerGroup.add(fpsGripMesh);
+
+        // Trigger guard
+        const fpsTriggerGeo = new THREE.TorusGeometry(0.045, 0.009, 6, 12, Math.PI);
+        const fpsTriggerMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8 });
+        const fpsTrigger = new THREE.Mesh(fpsTriggerGeo, fpsTriggerMat);
+        fpsTrigger.position.set(0, -0.09, 0.08);
+        fpsTrigger.rotation.x = Math.PI / 2;
+        fpsMarkerGroup.add(fpsTrigger);
+
+        // Hopper em cima
+        const fpsHopperBaseGeo = new THREE.CylinderGeometry(0.11, 0.08, 0.09, 12);
+        const fpsHopperMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3, metalness: 0.4 });
+        const fpsHopperBase = new THREE.Mesh(fpsHopperBaseGeo, fpsHopperMat);
+        fpsHopperBase.position.set(0, 0.135, -0.06);
+        fpsMarkerGroup.add(fpsHopperBase);
+
+        const fpsHopperTopGeo = new THREE.CylinderGeometry(0.10, 0.11, 0.14, 12);
+        const fpsHopperTopMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4, transparent: true, opacity: 0.9 });
+        const fpsHopperTop = new THREE.Mesh(fpsHopperTopGeo, fpsHopperTopMat);
+        fpsHopperTop.position.set(0, 0.235, -0.06);
+        fpsMarkerGroup.add(fpsHopperTop);
+
+        // Mira dianteira
+        const frontSightGeo = new THREE.BoxGeometry(0.012, 0.04, 0.012);
+        const sightMat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.9 });
+        const frontSight = new THREE.Mesh(frontSightGeo, sightMat);
+        frontSight.position.set(0, 0.075, -0.72);
+        fpsMarkerGroup.add(frontSight);
+
+        // Mira traseira
+        const rearSightGeo = new THREE.BoxGeometry(0.055, 0.032, 0.012);
+        const rearSight = new THREE.Mesh(rearSightGeo, sightMat);
+        rearSight.position.set(0, 0.072, -0.18);
+        fpsMarkerGroup.add(rearSight);
+
+        // Air tank
+        const fpsTankGeo = new THREE.CylinderGeometry(0.042, 0.042, 0.32, 12);
+        const fpsTankMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.85, roughness: 0.3 });
+        const fpsTank = new THREE.Mesh(fpsTankGeo, fpsTankMat);
+        fpsTank.rotation.x = Math.PI / 2;
+        fpsTank.position.set(0, -0.075, 0.22);
+        fpsMarkerGroup.add(fpsTank);
+
+        // Posicionar marker relativo à mão
+        fpsMarkerGroup.position.set(0, 0.07, -0.30);
+        fpsWeaponGroup.add(fpsMarkerGroup);
+
+        // Posição na tela: canto inferior direito
+        fpsWeaponGroup.position.set(0.30, -0.32, -0.65);
+        fpsWeaponGroup.rotation.set(0.08, -0.20, 0.0);
+
+        weaponCamera.add(fpsWeaponGroup);
+        weaponScene.add(weaponCamera);
+
+        // Animação de recuo e balanço ao andar
+        let recoilAnim = 0;
+        let recoilActive = false;
+        let walkBobTime = 0;
+
+        // --- ILUMINAÇÃO ---
+        const sunLight = new THREE.DirectionalLight(0xd4e8b0, 0.85);
+        sunLight.position.set(20, 30, 20);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 70;
+        sunLight.shadow.camera.left = -30;
+        sunLight.shadow.camera.right = 30;
+        sunLight.shadow.camera.top = 30;
+        sunLight.shadow.camera.bottom = -30;
+        scene.add(sunLight);
+
+        const ambientLight = new THREE.AmbientLight(0x4a6040, 1.0);
+        scene.add(ambientLight);
+
+        // Luz secundária verde-filtrada simulando dossel de floresta
+        const fillLight = new THREE.DirectionalLight(0x88bb66, 0.4);
+        fillLight.position.set(-15, 10, -10);
+        scene.add(fillLight);
+
+        // ============================================================
+        // SISTEMA DE CHÃO — tiles 0.5u com corte preciso nas trincheiras
+        // ============================================================
+        const _trenchDefs = [
+            { x:  0, z:  10, hw: 9.5, hd: 1.25 },
+            { x:  0, z: -10, hw: 9.5, hd: 1.25 },
+        ];
+
+        // Margem de corte: exatamente a parede da trincheira (wallThick = 0.55 / 2 ≈ 0.28 do centro)
+        // Tiles que caem DENTRO da abertura são omitidos
+        function _inTrenchOpening(tx, tz, half) {
+            for (const t of _trenchDefs) {
+                if (tx + half > t.x - t.hw && tx - half < t.x + t.hw &&
+                    tz + half > t.z - t.hd && tz - half < t.z + t.hd) return true;
+            }
+            return false;
+        }
+
+        // earthBase removido — causava faixa marrom visível de dentro das trincheiras.
+        // O interior de cada trincheira é preenchido por paredes+piso criados em createTrench.
+
+        // 2. TILES DE GRAMA — cobrindo tudo exceto a abertura exata das trincheiras
+        // Tiles grossos (0.5u altura) para que a borda lateral nunca apareça visível
+        // de dentro da trincheira (profundidade 1.8u), mesmo na borda
+        const TILE = 0.5;
+        const MAP_R_TILES = 46; // 46 * 0.5 = 23u raio
+        const tileH = 0.5;  // grossos — borda lateral fica abaixo do earthBase
+        const tileGeo = new THREE.BoxGeometry(TILE, tileH, TILE);
+        const grassMats = [
+            new THREE.MeshStandardMaterial({ color: 0x3a6828, roughness: 0.95 }),
+            new THREE.MeshStandardMaterial({ color: 0x426e32, roughness: 0.95 }),
+            new THREE.MeshStandardMaterial({ color: 0x34602a, roughness: 0.95 }),
+        ];
+
+        for (let ix = -MAP_R_TILES; ix < MAP_R_TILES; ix++) {
+            for (let iz = -MAP_R_TILES; iz < MAP_R_TILES; iz++) {
+                // Centro do tile
+                const tx = (ix + 0.5) * TILE;
+                const tz = (iz + 0.5) * TILE;
+                // Corte circular
+                if (Math.sqrt(tx*tx + tz*tz) > 22.5) continue;
+                // Pular se dentro da abertura da trincheira
+                if (_inTrenchOpening(tx, tz, TILE * 0.5)) continue;
+
+                const mat = grassMats[((Math.abs(ix * 3) + Math.abs(iz * 7))) % 3];
+                const tile = new THREE.Mesh(tileGeo, mat);
+                // Face superior em y=0, tile desce até y=-0.5 (dentro do earthBase)
+                tile.position.set(tx, -tileH * 0.5, tz);
+                tile.receiveShadow = true;
+                scene.add(tile);
+            }
+        }
+
+        // --- LISTA DE OBSTÁCULOS COM FORMAS REAIS ---
+        const obstacles = [];
+
+        // --- TRONCO CAÍDO (cobertura natural de floresta) ---
+        function createFallenLog(x, z, rotY = 0, length = 4.5) {
+            // Calcular a extensão real do tronco no mundo considerando rotação
+            const cosR = Math.abs(Math.cos(rotY));
+            const sinR = Math.abs(Math.sin(rotY));
+            const halfLenX = (length/2) * cosR + 0.4 * sinR;
+            const halfLenZ = (length/2) * sinR + 0.4 * cosR;
+
+            // Não criar se qualquer ponto do tronco tocar uma trincheira
+            const nearTrench = _trenchDefs.some(t =>
+                (x - halfLenX) < (t.x + t.hw + 1.0) && (x + halfLenX) > (t.x - t.hw - 1.0) &&
+                (z - halfLenZ) < (t.z + t.hd + 1.0) && (z + halfLenZ) > (t.z - t.hd - 1.0)
+            );
+            if (nearTrench) return;
+
+            const group = new THREE.Group();
+            const logColor = 0x5a3010 + (Math.abs(x*7+z*3) % 16) * 0x010000;
+            const logMat = new THREE.MeshStandardMaterial({ color: logColor, roughness: 1.0 });
+            const logGeo = new THREE.CylinderGeometry(0.28, 0.35, length, 8);
+            const log = new THREE.Mesh(logGeo, logMat);
+            log.rotation.z = Math.PI / 2;
+            log.position.y = 0.35;
+            log.castShadow = true; log.receiveShadow = true;
+            group.add(log);
+            // Manchas de musgo — pequenas esferas achatadas grudadas na superfície do tronco
+            const mossMat = new THREE.MeshStandardMaterial({ color: 0x3a5520, roughness: 1.0 });
+            const mossCount = 3 + (Math.abs(Math.floor(x*3+z*7)) % 3);
+            for (let m = 0; m < mossCount; m++) {
+                const mGeo = new THREE.SphereGeometry(0.12 + (m % 3) * 0.04, 5, 4);
+                const mMesh = new THREE.Mesh(mGeo, mossMat);
+                const angle = (m / mossCount) * Math.PI * 2;
+                // Posiciona na superfície do tronco (raio ~0.30), achatado radialmente
+                mMesh.position.set(
+                    (Math.abs(x*5+m*7) % 10 - 5) * (length * 0.08),  // ao longo do comprimento
+                    0.35 + Math.sin(angle) * 0.28,                     // em volta do tronco
+                    Math.cos(angle) * 0.28
+                );
+                mMesh.scale.set(1.0, 0.5, 0.5); // achatado para parecer mancha
+                group.add(mMesh);
+            }
+            group.position.set(x, 0, z);
+            group.rotation.y = rotY;
+            scene.add(group);
+
+            // Colisão como cilindro — raio exato do visual (0.35), sem AABB inflado
+            obstacles.push({
+                type: 'cylinder',
+                mesh: group,
+                position: new THREE.Vector3(x, 0, z),
+                radius: 0.35,
+                height: 0.7,
+                yMin: 0, yMax: 0.7
+            });
+        }
+
+        // --- PEDRA GRANDE (cobertura sólida) ---
+        function createRock(x, z, scale = 1.0) {
+            // Não criar pedras sobre trincheiras
+            const nearTrench = _trenchDefs.some(t => Math.abs(x-t.x) < t.hw+1.2 && Math.abs(z-t.z) < t.hd+1.2);
+            if (nearTrench) return;
+
+            const group = new THREE.Group();
+            const rockColor = [0x7a7a6a, 0x6e6e5e, 0x858575][Math.abs(Math.floor(x*3+z*7)) % 3];
+            const rockMat = new THREE.MeshStandardMaterial({ color: rockColor, roughness: 0.9 });
+            // Pedra principal — y = metade da altura para assentar no chão
+            const r1 = new THREE.Mesh(new THREE.BoxGeometry(1.4*scale, 0.85*scale, 1.1*scale), rockMat);
+            r1.position.y = 0.425*scale;
+            r1.castShadow = true; r1.receiveShadow = true;
+            group.add(r1);
+            // Pedra menor ao lado
+            const r2 = new THREE.Mesh(new THREE.BoxGeometry(0.8*scale, 0.6*scale, 0.75*scale), rockMat);
+            r2.position.set(0.5*scale, 0.3*scale, 0.3*scale);
+            r2.castShadow = true;
+            group.add(r2);
+            group.position.set(x, 0, z);
+            scene.add(group);
+            obstacles.push({
+                type: 'box',
+                mesh: group,
+                position: new THREE.Vector3(x, 0.4*scale, z),
+                size: new THREE.Vector3(1.6*scale, 0.85*scale, 1.3*scale),
+                yMin: 0, yMax: 0.85*scale
+            });
+        }
+
+        // --- ARBUSTO DENSO (cobertura visual/baixa) ---
+        function createBush(x, z) {
+            const group = new THREE.Group();
+            const bushMat = new THREE.MeshStandardMaterial({ color: 0x2d5a1a, roughness: 1.0 });
+            for (let i = 0; i < 3; i++) {
+                const r = 0.45 + (Math.abs(x*3+z*7+i*13) % 10) * 0.025; // determinístico, sem random
+                const bGeo = new THREE.SphereGeometry(r, 6, 5);
+                const b = new THREE.Mesh(bGeo, bushMat);
+                const offsetX = ((Math.abs(x*7+i*5) % 10) - 5) * 0.09;
+                const offsetZ = ((Math.abs(z*11+i*7) % 10) - 5) * 0.09;
+                // y = r garante que a base da esfera toca exatamente y=0 (chão)
+                b.position.set(offsetX, r, offsetZ);
+                b.castShadow = true; b.receiveShadow = true;
+                group.add(b);
+            }
+            group.position.set(x, 0, z);
+            scene.add(group);
+        }
+
+        // --- ÁRVORE DE FLORESTA (maior, mais densa) ---
+        const trunkPalette = [0x5c3210, 0x4a2808, 0x6b3c14, 0x3e2206, 0x553018];
+        const leafPalette  = [0x1a5010, 0x1e5c14, 0x245e18, 0x2a6a1c, 0x164a0c];
+        function createForestTree(x, z, height = 1.0) {
+            const treeGroup = new THREE.Group();
+            const trunkR = 0.22 + (Math.abs(x * 7 + z * 3) % 5) * 0.024;
+            const trunkH = 3.5*height + (Math.abs(x * 3 + z * 7) % 5) * 0.3;
+            const trunkGeo = new THREE.CylinderGeometry(trunkR*0.7, trunkR, trunkH, 7);
+            const trunkColor = trunkPalette[Math.abs(Math.floor(x*2+z*3)) % trunkPalette.length];
+            const trunkMat = new THREE.MeshStandardMaterial({ color: trunkColor, roughness: 1.0 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = trunkH/2;
+            trunk.castShadow = true; trunk.receiveShadow = true;
+            treeGroup.add(trunk);
+            // Folhagem em camadas
+            for (let layer = 0; layer < 3; layer++) {
+                const lr = (1.4 - layer*0.25)*height + (Math.abs(x+z+layer) % 3) * 0.1;
+                const lh = (1.8 - layer*0.2)*height;
+                const leafGeo = new THREE.ConeGeometry(lr, lh, 7);
+                const leafColor = leafPalette[(Math.abs(Math.floor(x*3+z*2)) + layer) % leafPalette.length];
+                const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 0.9 });
+                const leaf = new THREE.Mesh(leafGeo, leafMat);
+                leaf.position.y = trunkH*0.75 + layer*lh*0.55;
+                leaf.castShadow = true;
+                treeGroup.add(leaf);
+            }
+            treeGroup.position.set(x, 0, z);
+            scene.add(treeGroup);
+            obstacles.push({
+                type: 'cylinder',
+                mesh: treeGroup,
+                position: new THREE.Vector3(x, 0, z),
+                radius: trunkR,
+                height: trunkH,
+                yMin: 0, yMax: trunkH
+            });
+        }
+
+        // =====================================================
+        // LAYOUT DO MAPA FLORESTA DE BATALHA
+        // =====================================================
+
+        // Registro de posições de árvores para evitar sobreposição
+        const treePositions = [];
+        const MIN_TREE_DIST = 3.0; // distância mínima entre troncos
+
+        function canPlaceTree(x, z) {
+            for (const [px, pz] of treePositions) {
+                if (Math.sqrt((x-px)**2 + (z-pz)**2) < MIN_TREE_DIST) return false;
+            }
+            return true;
+        }
+
+        function tryPlaceTree(x, z, height) {
+            const nearTrench = _trenchDefs.some(t => Math.abs(x-t.x) < t.hw+2.0 && Math.abs(z-t.z) < t.hd+2.0);
+            if (nearTrench) return;
+            if (!canPlaceTree(x, z)) return;
+            treePositions.push([x, z]);
+            createForestTree(x, z, height);
+        }
+
+        // Anel exterior — floresta densa (raio 17-21)
+        for (let i = 0; i < 56; i++) {
+            const angle = (i / 56) * Math.PI * 2;
+            const r = 17 + (i % 3) * 1.5;
+            tryPlaceTree(Math.cos(angle)*r, Math.sin(angle)*r, 0.9 + (i%4)*0.12);
+        }
+        // Segunda camada interna (raio 12-15)
+        for (let i = 0; i < 32; i++) {
+            const angle = (i / 32) * Math.PI * 2 + 0.1;
+            const r = 12 + (i % 3) * 1.0;
+            tryPlaceTree(Math.cos(angle)*r, Math.sin(angle)*r, 0.8 + (i%3)*0.1);
+        }
+        // Árvores esparsas internas — posições fixas para não obstruir trincheiras
+        const sparseTreePositions = [
+            [-11, 7], [11, -7], [-12, -4], [12, 3],
+            [-7, -12], [7, 12], [14, -11], [-14, 9],
+            [3, -14], [-3, 14], [14, 5], [-14, -6],
+            [-10, -9], [10, 9], [-8, 14], [8, -14],
+        ];
+        for (const [tx, tz] of sparseTreePositions) {
+            tryPlaceTree(tx, tz, 0.75 + (Math.abs(tx+tz) % 3) * 0.1);
+        }
+
+        // Troncos caídos — espaçados de pedras, arbustos e entre si (distância mínima ~3u)
+        const logDefs = [
+            [ -7,   3,  0.3,  4.5],
+            [  7,  -3,  2.8,  4.5],
+            [ 13,  -6,  1.5,  4.2],
+            [-13,   6, -1.4,  4.2],
+            [ 12,   7,  0.1,  5.0],
+            [-12,  -7,  3.0,  5.0],
+            [  4,  14,  0.4,  4.0],
+            [ -4, -14, -0.4,  4.0],
+            [ 16,   2,  0.2,  4.5],
+            [-16,  -2,  3.1,  4.5],
+        ];
+        for (const [lx, lz, lrot, llen] of logDefs) {
+            createFallenLog(lx, lz, lrot, llen);
+        }
+
+        // Pedras estratégicas — afastadas dos troncos e arbustos
+        const rockDefs = [
+            [  9,   5, 1.0],
+            [ -9,  -5, 1.0],
+            [  6,  -7, 0.9],
+            [ -6,   7, 0.9],
+            [ 15,   6, 0.85],
+            [-15,  -6, 0.85],
+            [ 14,  -3, 1.0],
+            [-14,   3, 1.0],
+            [  2,  16, 1.1],
+            [ -2, -16, 1.1],
+        ];
+        for (const [rx, rz, rs] of rockDefs) {
+            createRock(rx, rz, rs);
+        }
+
+        // Arbustos decorativos — afastados de troncos e pedras
+        const bushPositions = [
+            [ 5,  6], [-5, -6],
+            [11,  2], [-11, -2],
+            [ 3, -8], [ -3,  8],
+            [17, -4], [-17,  4],
+            [ 7, 13], [ -7, -13],
+            [13, -9], [-13,  9],
+        ];
+        for (const [bx, bz] of bushPositions) {
+            const nearTrench = _trenchDefs.some(t => Math.abs(bx-t.x) < t.hw+0.8 && Math.abs(bz-t.z) < t.hd+0.8);
+            if (!nearTrench) createBush(bx, bz);
+        }
+
+        // Zona de pintura — removida (não temática de floresta)
+        const zoneTiles = []; // mantido vazio para compatibilidade com o loop de animação
+
+        // ===========================================
+        // TRINCHEIRAS
+        // ===========================================
+        const trenches = [];
+
+        function createTrench(cx, cz, width, depthSize, trenchDepth) {
+            const wallMat  = new THREE.MeshStandardMaterial({ color: 0x5c3a18, roughness: 0.98 });
+            const dirtMat  = new THREE.MeshStandardMaterial({ color: 0x3e2610, roughness: 1.0 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e1208, roughness: 1.0 });
+            const logMat   = new THREE.MeshStandardMaterial({ color: 0x5a2e0e, roughness: 0.9 });
+            const sandMat  = new THREE.MeshStandardMaterial({ color: 0xb89050, roughness: 0.95 });
+
+            const wallThick = 0.55;
+            // Paredes vão de y=+0.15 (acima dos tiles) até o fundo da terra
+            const wallH    = trenchDepth + 0.2;
+            const wallTopY = 0.15;
+            const wallCtrY = wallTopY - wallH / 2;
+
+            // PISO no fundo
+            const floorMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(width + 0.4, 0.3, depthSize + 0.4), floorMat);
+            floorMesh.position.set(cx, -trenchDepth + 0.15, cz);
+            floorMesh.receiveShadow = true;
+            scene.add(floorMesh);
+
+            // PAINÉIS DE TERRA internos — preenchem as 4 faces internas da vala
+            // do piso até y=0, cobrindo o espaço que ficaria exposto sem o earthBase
+            const innerH = trenchDepth - 0.15;   // altura do piso até y=0
+            const innerCtrY = -trenchDepth * 0.5 + 0.15 / 2;
+            const innerDirtMat = new THREE.MeshStandardMaterial({ color: 0x2a1a08, roughness: 1.0 });
+            // Frente e trás
+            for (const s of [-1, 1]) {
+                const ip = new THREE.Mesh(
+                    new THREE.BoxGeometry(width, innerH, 0.05), innerDirtMat);
+                ip.position.set(cx, innerCtrY, cz + s * (depthSize / 2));
+                ip.receiveShadow = true;
+                scene.add(ip);
+            }
+            // Lados
+            for (const s of [-1, 1]) {
+                const ip = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.05, innerH, depthSize), innerDirtMat);
+                ip.position.set(cx + s * (width / 2), innerCtrY, cz);
+                ip.receiveShadow = true;
+                scene.add(ip);
+            }
+
+            // PAREDES — frente e trás
+            for (const s of [-1, 1]) {
+                const wm = new THREE.Mesh(
+                    new THREE.BoxGeometry(width + wallThick * 2, wallH, wallThick), wallMat);
+                wm.position.set(cx, wallCtrY, cz + s * (depthSize / 2 + wallThick / 2));
+                wm.receiveShadow = true; wm.castShadow = true;
+                scene.add(wm);
+                const dm = new THREE.Mesh(
+                    new THREE.BoxGeometry(width + 0.1, wallH * 0.9, 0.06), dirtMat);
+                dm.position.set(cx, wallCtrY, cz + s * (depthSize / 2 - 0.01));
+                scene.add(dm);
+            }
+            // PAREDES — lados
+            for (const s of [-1, 1]) {
+                const wm = new THREE.Mesh(
+                    new THREE.BoxGeometry(wallThick, wallH, depthSize + wallThick * 2), wallMat);
+                wm.position.set(cx + s * (width / 2 + wallThick / 2), wallCtrY, cz);
+                wm.receiveShadow = true; wm.castShadow = true;
+                scene.add(wm);
+                const dm = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.06, wallH * 0.9, depthSize + 0.1), dirtMat);
+                dm.position.set(cx + s * (width / 2 - 0.01), wallCtrY, cz);
+                scene.add(dm);
+            }
+
+            // TORAS nas bordas superiores — ancoradas ao topo da parede
+            // logR: raio máximo do cilindro; as toras ficam apoiadas na borda, não flutuando
+            const logR = 0.13;
+            const logBaseY = wallTopY + logR; // topo da parede + raio → tora assenta na borda
+            for (const s of [-1, 1]) {
+                for (let t = 0; t < 2; t++) {
+                    const lm = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.11, logR, width + 1.2, 8), logMat);
+                    lm.rotation.z = Math.PI / 2;
+                    lm.position.set(cx, logBaseY + t * (logR * 2 + 0.02), cz + s * (depthSize / 2 + wallThick / 2));
+                    lm.castShadow = true; scene.add(lm);
+                }
+            }
+            for (const s of [-1, 1]) {
+                for (let t = 0; t < 2; t++) {
+                    const lm = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.11, logR, depthSize + 1.2, 8), logMat);
+                    lm.rotation.z = Math.PI / 2;
+                    lm.rotation.y = Math.PI / 2; // girar para ficar paralelo ao eixo Z
+                    lm.position.set(cx + s * (width / 2 + wallThick / 2), logBaseY + t * (logR * 2 + 0.02), cz);
+                    lm.castShadow = true; scene.add(lm);
+                }
+            }
+
+            // SACOS DE AREIA
+            for (const [sx, sz] of [[-1,-1],[1,-1],[-1,1],[1,1]]) {
+                for (let stack = 0; stack < 3; stack++) {
+                    const bm = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.55, 0.28, 0.42), sandMat);
+                    bm.position.set(
+                        cx + sx * (width / 2 - 0.30),
+                        0.22 + stack * 0.26,
+                        cz + sz * (depthSize / 2 - 0.22)
+                    );
+                    bm.rotation.y = ((cx * sx + cz * sz) % 5) * 0.08;
+                    bm.castShadow = true; scene.add(bm);
+                }
+            }
+            const nBags = Math.max(0, Math.floor(width / 1.2) - 1);
+            for (let i = 1; i <= nBags; i++) {
+                for (const s of [-1, 1]) {
+                    const bm = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.5, 0.27, 0.4), sandMat);
+                    bm.position.set(
+                        cx - width / 2 + i * (width / (nBags + 1)),
+                        0.22,
+                        cz + s * (depthSize / 2 - 0.2)
+                    );
+                    bm.rotation.y = (i % 3) * 0.1;
+                    bm.castShadow = true; scene.add(bm);
+                }
+            }
+
+            trenches.push({ x: cx, z: cz, halfW: width / 2, halfD: depthSize / 2, floor: -trenchDepth });
+        }
+
+        // Apenas 2 trincheiras — linha de frente de cada time
+        createTrench(  0,  10,  19,  2.5, 1.8);   // frente do time verde
+        createTrench(  0, -10,  19,  2.5, 1.8);   // frente do time rosa
+
+        // Retorna o nível do piso em (x,z): 0=normal, negativo=trincheira
+        function getTrenchFloor(x, z) {
+            for (const t of trenches) {
+                if (Math.abs(x - t.x) < t.halfW - 0.3 && Math.abs(z - t.z) < t.halfD - 0.3)
+                    return t.floor;
+            }
+            return 0;
+        }
+
+        // ===========================================
+        // SISTEMA DE TIMES
+        // ===========================================
+        let greenScore = 0;
+        let pinkScore = 0;
+        
+        const playerTeam = 'green';
+        let playerHealth = 3;
+        
+        // Jogador vivo ou morto
+        const player = {
+            mesh: null,
+            velocity: new THREE.Vector3(0, 0, 0),
+            position: new THREE.Vector3(0, 1.8, 0),
+            onGround: false,
+            speed: 8,
+            radius: 0.5,
+            height: 1.8,
+            canJump: true,
+            jumpCooldown: 0,
+            team: 'green',
+            alive: true,
+            animTime: 0
+        };
+
+        // =============================================
+        // PLAYER — hierarquia humanóide correta
+        // Estrutura:
+        //   playerGroup (raiz no chão)
+        //     └─ hipPivot (y=0.7 — quadril)
+        //         ├─ torso  (body mesh, local y=+0.4 → mundo y=1.1)
+        //         │    ├─ neckPivot (local y=+0.45 → mundo y=1.55)
+        //         │    │    └─ head + helmet
+        //         │    ├─ shoulderPivotL (local x=-0.42, y=+0.35)
+        //         │    │    └─ arm mesh (local y=-0.325, rotaciona pelo ombro)
+        //         │    │         └─ marker (arma)
+        //         │    └─ shoulderPivotR (local x=+0.42, y=+0.35)
+        //         │         └─ arm mesh (local y=-0.325)
+        //         ├─ hipPivotL (local x=-0.18, y=0) → perna esq
+        //         └─ hipPivotR (local x=+0.18, y=0) → perna dir
+        // =============================================
+        const playerGroup = new THREE.Group();
+
+        // --- Quadril (pivot central em y=0.7) ---
+        const hipPivot = new THREE.Group();
+        hipPivot.position.y = 0.70;
+        playerGroup.add(hipPivot);
+
+        // Torso
+        const bodyGeo = new THREE.BoxGeometry(0.7, 0.8, 0.4);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x009c3b });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.40;   // centro do torso acima do quadril
+        body.castShadow = true;
+        body.receiveShadow = true;
+        hipPivot.add(body);
+
+        // Pescoço pivot (filho do torso, no topo)
+        const neckPivot = new THREE.Group();
+        neckPivot.position.y = 0.45;   // topo do torso
+        body.add(neckPivot);
+
+        // Cabeça
+        const headGeo = new THREE.SphereGeometry(0.28, 8, 8);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xffccaa });
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.y = 0.28;
+        head.castShadow = true;
+        neckPivot.add(head);
+
+        const helmetGeo = new THREE.SphereGeometry(0.31, 8, 8);
+        const helmetMat = new THREE.MeshStandardMaterial({ color: 0x004d1a, roughness: 0.3 });
+        const helmetMesh = new THREE.Mesh(helmetGeo, helmetMat);
+        helmetMesh.position.y = 0.30;
+        helmetMesh.scale.y = 0.75;
+        neckPivot.add(helmetMesh);
+
+        // --- Ombro Esquerdo (pivot no ombro) ---
+        const shoulderPivotL = new THREE.Group();
+        shoulderPivotL.position.set(-0.43, 0.30, 0);
+        body.add(shoulderPivotL);
+
+        const pArmGeo = new THREE.BoxGeometry(0.20, 0.65, 0.20);
+        const pArmMat = new THREE.MeshStandardMaterial({ color: 0x009c3b });
+
+        const pArmLMesh = new THREE.Mesh(pArmGeo, pArmMat);
+        pArmLMesh.position.y = -0.325;   // braço pende abaixo do pivot
+        pArmLMesh.castShadow = true;
+        shoulderPivotL.add(pArmLMesh);
+
+        // --- Ombro Direito ---
+        const shoulderPivotR = new THREE.Group();
+        shoulderPivotR.position.set(0.43, 0.30, 0);
+        body.add(shoulderPivotR);
+
+        const pArmRMesh = new THREE.Mesh(pArmGeo, pArmMat);
+        pArmRMesh.position.y = -0.325;
+        pArmRMesh.castShadow = true;
+        shoulderPivotR.add(pArmRMesh);
+
+        // --- Arma — presa ao ombro esquerdo (visualmente mão direita, pois enfrenta a câmera) ---
+        const markerGroup = new THREE.Group();
+
+        const markerBodyGeo = new THREE.BoxGeometry(0.08, 0.1, 0.55);
+        const markerBodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.4, metalness: 0.7 });
+        markerGroup.add(new THREE.Mesh(markerBodyGeo, markerBodyMat));
+
+        const barrelGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.55, 8);
+        const barrelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.2 });
+        const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.set(0, 0.01, -0.52);
+        markerGroup.add(barrel);
+
+        const gripGeo = new THREE.BoxGeometry(0.07, 0.2, 0.08);
+        const gripMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
+        const grip = new THREE.Mesh(gripGeo, gripMat);
+        grip.position.set(0, -0.13, 0.1);
+        grip.rotation.x = 0.25;
+        markerGroup.add(grip);
+
+        const triggerGeo = new THREE.TorusGeometry(0.04, 0.008, 6, 10, Math.PI);
+        const triggerMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8 });
+        const trigger = new THREE.Mesh(triggerGeo, triggerMat);
+        trigger.position.set(0, -0.08, 0.06);
+        trigger.rotation.x = Math.PI / 2;
+        markerGroup.add(trigger);
+
+        const hopperBaseGeo = new THREE.CylinderGeometry(0.1, 0.07, 0.08, 10);
+        const hopperMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 });
+        const hopperBase = new THREE.Mesh(hopperBaseGeo, hopperMat);
+        hopperBase.position.set(0, 0.12, -0.05);
+        markerGroup.add(hopperBase);
+
+        const hopperTopGeo = new THREE.CylinderGeometry(0.09, 0.1, 0.12, 10);
+        const hopperTopMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4, transparent: true, opacity: 0.85 });
+        const hopperTop = new THREE.Mesh(hopperTopGeo, hopperTopMat);
+        hopperTop.position.set(0, 0.21, -0.05);
+        markerGroup.add(hopperTop);
+
+        const tankGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 10);
+        const tankMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.3 });
+        const tank = new THREE.Mesh(tankGeo, tankMat);
+        tank.rotation.x = Math.PI / 2;
+        tank.position.set(0, -0.07, 0.2);
+        markerGroup.add(tank);
+
+        // Arma posicionada na ponta do braço esq (visualmente direita)
+        markerGroup.position.set(0, -0.65, -0.05);
+        markerGroup.rotation.set(0, Math.PI, 0);
+        markerGroup.visible = false; // oculta pois a arma FPS em primeira pessoa já representa isso
+        shoulderPivotL.add(markerGroup);
+
+        // --- Pernas: pivot no quadril ---
+        const pLegGeo = new THREE.BoxGeometry(0.25, 0.70, 0.25);
+        const pLegMat = new THREE.MeshStandardMaterial({ color: 0x1a3a1a });
+
+        // Pivot esquerdo
+        const hipPivotL = new THREE.Group();
+        hipPivotL.position.set(-0.18, 0, 0);
+        hipPivot.add(hipPivotL);
+
+        const pLegL = new THREE.Mesh(pLegGeo, pLegMat);
+        pLegL.position.y = -0.35;   // pende abaixo do pivot
+        pLegL.castShadow = true;
+        hipPivotL.add(pLegL);
+
+        // Pivot direito
+        const hipPivotR = new THREE.Group();
+        hipPivotR.position.set(0.18, 0, 0);
+        hipPivot.add(hipPivotR);
+
+        const pLegR = new THREE.Mesh(pLegGeo, pLegMat);
+        pLegR.position.y = -0.35;
+        pLegR.castShadow = true;
+        hipPivotR.add(pLegR);
+
+        scene.add(playerGroup);
+        player.mesh = playerGroup;
+        // Expor os pivots para animação
+        player.hipPivotL    = hipPivotL;
+        player.hipPivotR    = hipPivotR;
+        player.shoulderPivL = shoulderPivotL;
+        player.shoulderPivR = shoulderPivotR;
+        player.neckPivot    = neckPivot;
+        player.hipPivot     = hipPivot;
+        // Manter compatibilidade com código legado
+        player.pLegL = hipPivotL;
+        player.pLegR = hipPivotR;
+        player.pArmL = shoulderPivotL;
+        player.pArmR = shoulderPivotR;
+        // Referências dos meshes do jogador para receber manchas
+        player.bodyMesh   = body;
+        player.headMesh   = head;
+        player.helmetMesh = helmetMesh;
+        player.legLMesh   = pLegL;
+        player.legRMesh   = pLegR;
+
+        // =============================================
+        // SISTEMA DE MANCHAS DE TINTA (Paint Splats)
+        // =============================================
+        const PAINT_COLORS_GREEN = [0x00ff44, 0x00cc33, 0x33ff77, 0x00ff99];
+        const PAINT_COLORS_PINK  = [0xff3366, 0xff6b9d, 0xff0055, 0xff99bb];
+
+        // Geometrias reutilizáveis para manchas (esferas achatadas de tamanhos variados)
+        const splatGeos = [
+            new THREE.SphereGeometry(0.13, 6, 4),
+            new THREE.SphereGeometry(0.09, 6, 4),
+            new THREE.SphereGeometry(0.17, 6, 4),
+            new THREE.SphereGeometry(0.07, 5, 3),
+        ];
+
+        // Pontos de spawn de manchas no corpo (espaço local do torso/cabeça)
+        const TORSO_SPLAT_POINTS = [
+            new THREE.Vector3( 0.0,  0.2,  0.22),  // frente centro
+            new THREE.Vector3( 0.2,  0.1,  0.18),  // frente direita
+            new THREE.Vector3(-0.2,  0.3,  0.18),  // frente esquerda
+            new THREE.Vector3( 0.0,  0.0, -0.22),  // costas
+            new THREE.Vector3( 0.3,  0.2,  0.0 ),  // lado direito
+            new THREE.Vector3(-0.3,  0.0,  0.0 ),  // lado esquerdo
+            new THREE.Vector3( 0.1, -0.2,  0.18),  // barriga
+            new THREE.Vector3(-0.1,  0.35, 0.18),  // peito
+        ];
+        const HEAD_SPLAT_POINTS = [
+            new THREE.Vector3( 0.0,  0.1,  0.28),
+            new THREE.Vector3( 0.2,  0.0,  0.18),
+            new THREE.Vector3(-0.15, 0.15, 0.22),
+            new THREE.Vector3( 0.0, -0.1,  0.28),
+        ];
+
+        function addPaintSplat(targetMesh, shooterTeam, hitPos) {
+            const colors = shooterTeam === 'green' ? PAINT_COLORS_GREEN : PAINT_COLORS_PINK;
+
+            // Número de manchas por hit: 3-6 blobs
+            const count = 3 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < count; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const geo   = splatGeos[Math.floor(Math.random() * splatGeos.length)];
+                const mat   = new THREE.MeshStandardMaterial({
+                    color,
+                    roughness: 0.3,
+                    metalness: 0.0,
+                    emissive: color,
+                    emissiveIntensity: 0.18,
+                });
+                const splat = new THREE.Mesh(geo, mat);
+
+                // Posição: ponto de hit convertido para espaço local do mesh alvo,
+                // com pequeno jitter para espalhamento natural
+                const localPos = targetMesh.worldToLocal(hitPos.clone());
+                splat.position.set(
+                    localPos.x + (Math.random() - 0.5) * 0.28,
+                    localPos.y + (Math.random() - 0.5) * 0.28,
+                    localPos.z + (Math.random() - 0.5) * 0.08
+                );
+
+                // Escala achatada — parece mancha 2D colada na superfície
+                splat.scale.set(
+                    1.0 + Math.random() * 0.5,
+                    1.0 + Math.random() * 0.5,
+                    0.18 + Math.random() * 0.12
+                );
+                splat.rotation.z = Math.random() * Math.PI * 2;
+
+                targetMesh.add(splat);
+            }
+        }
+
+        // Limpa todas as manchas de um mesh (ao reiniciar)
+        function clearPaintSplats(mesh) {
+            if (!mesh) return;
+            const toRemove = mesh.children.filter(c => c.isMesh && c.geometry && splatGeos.includes(c.geometry));
+            toRemove.forEach(c => mesh.remove(c));
+        }
+
+        // Aplica manchas num personagem completo (torso + cabeça) baseado no ponto de impacto
+        function paintCharacter(entityMeshes, hitWorldPos, shooterTeam) {
+            // Escolher mesh mais próximo do ponto de hit para anexar a mancha
+            let closest = null, closestDist = Infinity;
+            for (const m of entityMeshes) {
+                const wp = new THREE.Vector3();
+                m.getWorldPosition(wp);
+                const d = wp.distanceTo(hitWorldPos);
+                if (d < closestDist) { closestDist = d; closest = m; }
+            }
+            if (closest) addPaintSplat(closest, shooterTeam, hitWorldPos);
+        }
+
+        let npcs = [];
+
+        function updateTeamDisplay() {
+            document.getElementById('green-score').textContent = greenScore;
+            document.getElementById('pink-score').textContent = pinkScore;
+            
+            const greenNPCs = npcs.filter(n => n.team === 'green' && n.active);
+            const pinkNPCs = npcs.filter(n => n.team === 'pink' && n.active);
+            
+            let html = '';
+            html += `<div class="player-item"><span class="team-green">🟢 User 1</span> <span>❤️ ${player.alive ? playerHealth : '💀'}</span></div>`;
+            
+            greenNPCs.forEach((n, i) => {
+                html += `<div class="player-item"><span class="team-green">🟢 Aliado ${i+1}</span> <span>❤️ ${n.health}</span></div>`;
+            });
+            
+            pinkNPCs.forEach((n, i) => {
+                const label = n.name ? n.name : `Inimigo ${i+1}`;
+                html += `<div class="player-item"><span class="team-pink">🔴 ${label}</span> <span>❤️ ${n.health}</span></div>`;
+            });
+            
+            document.getElementById('team-players').innerHTML = html;
+
+            checkVictoryCondition();
+        }
+
+        // ===========================================
+        // NPCs (2 verdes, 3 rosas) - hierarquia humanóide
+        // ===========================================
+        function createNPC(x, z, team, npcName = null) {
+            const color = team === 'green' ? 0x00aa00 : 0xdd3355;
+            const skinColor = 0xffaa88;
+            const group = new THREE.Group();
+
+            // Quadril pivot
+            const npcHip = new THREE.Group();
+            npcHip.position.y = 0.70;
+            group.add(npcHip);
+
+            // Torso
+            const torsoGeo = new THREE.BoxGeometry(0.7, 0.8, 0.4);
+            const torsoMat = new THREE.MeshStandardMaterial({ color: color });
+            const torso = new THREE.Mesh(torsoGeo, torsoMat);
+            torso.position.y = 0.40;
+            torso.castShadow = true;
+            npcHip.add(torso);
+
+            // Pescoço pivot
+            const npcNeck = new THREE.Group();
+            npcNeck.position.y = 0.45;
+            torso.add(npcNeck);
+
+            // Cabeça
+            const headGeo = new THREE.SphereGeometry(0.28, 8, 8);
+            const headMat = new THREE.MeshStandardMaterial({ color: skinColor });
+            const headMesh = new THREE.Mesh(headGeo, headMat);
+            headMesh.position.y = 0.28;
+            headMesh.castShadow = true;
+            npcNeck.add(headMesh);
+
+            const helmetGeo = new THREE.SphereGeometry(0.31, 8, 8);
+            const helmetMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 });
+            const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+            helmet.position.y = 0.30;
+            helmet.scale.y = 0.75;
+            npcNeck.add(helmet);
+
+            // Ombros
+            const npcShouldL = new THREE.Group();
+            npcShouldL.position.set(-0.43, 0.30, 0);
+            torso.add(npcShouldL);
+
+            const npcShouldR = new THREE.Group();
+            npcShouldR.position.set(0.43, 0.30, 0);
+            torso.add(npcShouldR);
+
+            const armGeo = new THREE.BoxGeometry(0.2, 0.65, 0.2);
+            const armMat = new THREE.MeshStandardMaterial({ color: color });
+
+            const armL = new THREE.Mesh(armGeo, armMat);
+            armL.position.y = -0.325;
+            armL.castShadow = true;
+            npcShouldL.add(armL);
+
+            const armR = new THREE.Mesh(armGeo, armMat);
+            armR.position.y = -0.325;
+            armR.castShadow = true;
+            npcShouldR.add(armR);
+
+            // Marker — ombro esquerdo (visualmente mão direita)
+            const npcMarker = new THREE.Group();
+
+            const npcBodyGeo = new THREE.BoxGeometry(0.07, 0.09, 0.48);
+            const npcBodyMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.7 });
+            npcMarker.add(new THREE.Mesh(npcBodyGeo, npcBodyMat));
+
+            const npcBarrelGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.48, 8);
+            const npcBarrelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 });
+            const npcBarrel = new THREE.Mesh(npcBarrelGeo, npcBarrelMat);
+            npcBarrel.rotation.x = Math.PI / 2;
+            npcBarrel.position.set(0, 0.01, -0.46);
+            npcMarker.add(npcBarrel);
+
+            const npcGripGeo = new THREE.BoxGeometry(0.06, 0.17, 0.07);
+            const npcGripMat = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.9 });
+            const npcGrip = new THREE.Mesh(npcGripGeo, npcGripMat);
+            npcGrip.position.set(0, -0.12, 0.09);
+            npcGrip.rotation.x = 0.2;
+            npcMarker.add(npcMarker);
+
+            const npcHopperGeo = new THREE.CylinderGeometry(0.085, 0.06, 0.15, 10);
+            const npcHopperMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4 });
+            const npcHopper = new THREE.Mesh(npcHopperGeo, npcHopperMat);
+            npcHopper.position.set(0, 0.16, -0.04);
+            npcMarker.add(npcHopper);
+
+            const npcTankGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.26, 10);
+            const npcTankMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8 });
+            const npcTank = new THREE.Mesh(npcTankGeo, npcTankMat);
+            npcTank.rotation.x = Math.PI / 2;
+            npcTank.position.set(0, -0.06, 0.18);
+            npcMarker.add(npcTank);
+
+            npcMarker.position.set(0, -0.65, -0.05);
+            npcMarker.rotation.set(0, Math.PI, 0);
+            npcShouldL.add(npcMarker);
+
+            // Pernas com pivot no quadril
+            const legGeo = new THREE.BoxGeometry(0.25, 0.70, 0.25);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x333355 });
+
+            const npcHipL = new THREE.Group();
+            npcHipL.position.set(-0.18, 0, 0);
+            npcHip.add(npcHipL);
+            const legL = new THREE.Mesh(legGeo, legMat);
+            legL.position.y = -0.35;
+            legL.castShadow = true;
+            npcHipL.add(legL);
+
+            const npcHipR = new THREE.Group();
+            npcHipR.position.set(0.18, 0, 0);
+            npcHip.add(npcHipR);
+            const legR = new THREE.Mesh(legGeo, legMat);
+            legR.position.y = -0.35;
+            legR.castShadow = true;
+            npcHipR.add(legR);
+
+            group.position.set(x, 0, z);
+            scene.add(group);
+
+            const npc = {
+                mesh: group,
+                torso: torso,
+                weapon: npcMarker,
+                legL: npcHipL, legR: npcHipR,
+                armL: npcShouldL, armR: npcShouldR,
+                position: new THREE.Vector3(x, 0, z),
+                velocity: new THREE.Vector3(0, 0, 0),
+                speed: 4.5,
+                radius: 0.5,
+                height: 1.8,
+                onGround: false,
+                team: team,
+                timer: 0,
+                jumpCooldown: 0,
+                stuckTimer: 0,
+                lastX: x, lastZ: z,
+                health: 3,
+                active: true,
+                shootCooldown: 0,
+                ammo: 10,
+                maxAmmo: 10,
+                reloadTimer: 0,
+                targetEnemy: null,
+                animTime: Math.random() * Math.PI * 2,
+                name: npcName
+            };
+
+            npcs.push(npc);
+            return npc;
+        }
+
+        let gameMode = '3x3'; // set by menu
+
+        function resetNPCs() {
+            npcs.forEach(npc => {
+                if (npc.mesh) scene.remove(npc.mesh);
+            });
+            npcs = [];
+
+            // Limpar manchas de tinta do jogador ao reiniciar
+            if (player.bodyMesh)   clearPaintSplats(player.bodyMesh);
+            if (player.headMesh)   clearPaintSplats(player.headMesh);
+            if (player.helmetMesh) clearPaintSplats(player.helmetMesh);
+
+            if (gameMode === '5x5') {
+                // 5x5: mapa duplo, posições espalhadas
+                player.position.set(0, 1.8, 25);
+                camera.position.copy(player.position);
+                player.alive = true;
+                if (player.mesh) player.mesh.visible = true;
+                player.velocity.set(0, 0, 0);
+                player.onGround = false;
+
+                // Time verde (4 aliados)
+                createNPC( 5, 28, 'green');
+                createNPC(-5, 27, 'green');
+                createNPC( 8, 24, 'green');
+                createNPC(-8, 26, 'green');
+
+                // Time rosa (5 inimigos)
+                createNPC(-5, -28, 'pink', 'Alfa');
+                createNPC( 5, -27, 'pink', 'Bravo');
+                createNPC( 0, -30, 'pink', 'Charlie');
+                createNPC( 9, -25, 'pink', 'Delta');
+                createNPC(-9, -26, 'pink', 'Echo');
+            } else {
+                // 3x3 padrão
+                player.position.set(0, 1.8, 14);
+                camera.position.copy(player.position);
+                player.alive = true;
+                if (player.mesh) player.mesh.visible = true;
+                player.velocity.set(0, 0, 0);
+                player.onGround = false;
+
+                createNPC( 3, 16, 'green');
+                createNPC(-3, 15, 'green');
+
+                createNPC(-3, -16, 'pink', 'Alfa');
+                createNPC( 3, -15, 'pink', 'Bravo');
+                createNPC( 0, -17, 'pink', 'Charlie');
+            }
+            
+            greenScore = 0;
+            pinkScore = 0;
+            playerHealth = 3;
+            document.getElementById('player-health-text').textContent = 'Vida: 3';
+            document.getElementById('health-fill').style.width = '100%';
+            document.getElementById('death-message').style.display = 'none';
+            updateTeamDisplay();
+        }
+
+        function showNotification(msg, color = '#ffdf00') {
+            const el = document.createElement('div');
+            el.textContent = msg;
+            el.style.cssText = `position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);
+                background:rgba(0,0,0,0.85);color:${color};padding:10px 24px;border-radius:30px;
+                font-size:1.1rem;font-weight:bold;z-index:500;pointer-events:none;
+                border:2px solid ${color};transition:opacity 0.4s;`;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; }, 800);
+            setTimeout(() => el.remove(), 1200);
+        }
+
+        // ===========================================
+        // SISTEMA DE TIRO
+        // ===========================================
+        const projectiles = [];
+        let ammo = 10;
+        let maxAmmo = 10;
+        
+        function shoot(position, direction, team, isSpecial = false) {
+            // Se o jogador está morto, não atira
+            if (team === 'green' && !player.alive) return false;
+            if (team === 'green' && ammo <= 0) {
+                showNotification('Sem munição! Pressione R para recarregar', '#ff4444');
+                return false;
+            }
+            
+            if (team === 'green') {
+                ammo--;
+                document.getElementById('ammo-count').textContent = `${ammo}/${maxAmmo}`;
+            }
+            
+            const bulletGeo = new THREE.SphereGeometry(0.12, 8, 8);
+            const bulletMat = new THREE.MeshStandardMaterial({ 
+                color: isSpecial ? 0xffdf00 : (team === 'green' ? 0x00ff00 : 0xff6b6b),
+                emissive: isSpecial ? 0x332200 : 0x220000
+            });
+            const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+            
+            bullet.position.copy(position);
+            bullet.position.addScaledVector(direction, 1);
+            
+            bullet.castShadow = true;
+            scene.add(bullet);
+            
+            const velocity = direction.clone().multiplyScalar(25);
+            
+            projectiles.push({
+                mesh: bullet,
+                velocity: velocity,
+                life: 150,
+                damage: 100,
+                isSpecial: isSpecial,
+                shooterTeam: team,
+                prevPos: bullet.position.clone(),
+                radius: 0.12
+            });
+            
+            return true;
+        }
+
+        function playerShoot(isSpecial = false) {
+            if (!player.alive) return;
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            shoot(camera.position, direction, 'green', isSpecial);
+            
+            // Ativar animação de recuo
+            recoilActive = true;
+            recoilAnim = 0;
+            
+            const splatter = document.createElement('div');
+            splatter.style.position = 'absolute';
+            splatter.style.width = '100px';
+            splatter.style.height = '100px';
+            splatter.style.background = `radial-gradient(circle, ${isSpecial ? '#ffdf00' : '#ff6b6b'}, transparent)`;
+            splatter.style.left = '50%';
+            splatter.style.top = '50%';
+            splatter.style.transform = 'translate(-50%, -50%) scale(0)';
+            splatter.style.borderRadius = '50%';
+            splatter.style.transition = 'transform 0.2s';
+            splatter.style.pointerEvents = 'none';
+            splatter.style.zIndex = '1000';
+            document.body.appendChild(splatter);
+            
+            setTimeout(() => {
+                splatter.style.transform = 'translate(-50%, -50%) scale(3)';
+            }, 10);
+            
+            setTimeout(() => {
+                splatter.remove();
+            }, 200);
+        }
+
+        // --- CONTROLES ---
+        const moveState = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            jump: false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'KeyW': moveState.forward = true; break;
+                case 'KeyS': moveState.backward = true; break;
+                case 'KeyA': moveState.left = true; break;
+                case 'KeyD': moveState.right = true; break;
+                case 'Space': 
+                    moveState.jump = true;
+                    e.preventDefault();
+                    break;
+                case 'KeyR':
+                    if (player.alive) {
+                        ammo = maxAmmo;
+                        document.getElementById('ammo-count').textContent = `${ammo}/${maxAmmo}`;
+                    }
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'KeyW': moveState.forward = false; break;
+                case 'KeyS': moveState.backward = false; break;
+                case 'KeyA': moveState.left = false; break;
+                case 'KeyD': moveState.right = false; break;
+                case 'Space': moveState.jump = false; break;
+            }
+        });
+
+        let mouseSensitivity = 0.002;
+        let pitch = 0;
+        let yaw = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            if (pointerLocked && player.alive) {
+                yaw -= e.movementX * mouseSensitivity;
+                pitch -= e.movementY * mouseSensitivity;
+                pitch = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, pitch));
+                camera.rotation.order = 'YXZ';
+                camera.rotation.y = yaw;
+                camera.rotation.x = pitch;
+            } else if (pointerLocked && !player.alive) {
+                // Modo espectador — só rotaciona, câmera não se move
+                yaw -= e.movementX * mouseSensitivity;
+                pitch -= e.movementY * mouseSensitivity;
+                pitch = Math.max(-Math.PI/2.2, Math.min(Math.PI/2.2, pitch));
+                camera.rotation.order = 'YXZ';
+                camera.rotation.y = yaw;
+                camera.rotation.x = pitch;
+            }
+        });
+
+        let pointerLocked = false;
+        document.addEventListener('pointerlockchange', () => {
+            pointerLocked = !!document.pointerLockElement;
+        });
+
+        renderer.domElement.addEventListener('click', () => {
+            if (!pointerLocked) {
+                renderer.domElement.requestPointerLock();
+                // NÃO atirar neste clique — ele é só para travar o mouse
+            } else if (player.alive) {
+                playerShoot(false);
+            }
+        });
+
+        renderer.domElement.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (pointerLocked && player.alive) {
+                playerShoot(true);
+            }
+        });
+
+        setInterval(() => {
+            const warning = document.getElementById('pointer-warning');
+            warning.style.display = pointerLocked ? 'none' : 'block';
+        }, 1000);
+
+        // ===========================================
+        // FÍSICA DO JOGADOR (só executa se vivo)
+        // ===========================================
+        // Returns push-out vector if colliding, or null if free
+        function getPlayerPushOut(pos) {
+            const playerMinY = pos.y - player.height;
+            const playerMaxY = pos.y;
+            const floorY = getTrenchFloor(pos.x, pos.z);
+            if (playerMinY < floorY) return new THREE.Vector3(0, floorY - playerMinY, 0);
+            
+            for (let obs of obstacles) {
+                // Skip obstacles that are on a different floor level (avoids phantom collisions near trenches)
+                const floorAtObs = getTrenchFloor(obs.position.x, obs.position.z);
+                if (Math.abs(floorAtObs - floorY) > 0.5) continue;
+
+                if (obs.type === 'cylinder') {
+                    if (playerMaxY <= obs.yMin || playerMinY >= obs.yMax) continue;
+                    const dx = pos.x - obs.position.x;
+                    const dz = pos.z - obs.position.z;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    const minDist = player.radius + obs.radius;
+                    if (dist < minDist) {
+                        const overlap = minDist - dist;
+                        if (dist > 0.001) {
+                            return new THREE.Vector3((dx/dist)*overlap, 0, (dz/dist)*overlap);
+                        } else {
+                            return new THREE.Vector3(overlap, 0, 0);
+                        }
+                    }
+                } else if (obs.type === 'box') {
+                    if (playerMaxY <= obs.yMin || playerMinY >= obs.yMax) continue;
+                    const halfX = obs.size.x / 2 + player.radius;
+                    const halfZ = obs.size.z / 2 + player.radius;
+                    const dx = pos.x - obs.position.x;
+                    const dz = pos.z - obs.position.z;
+                    const overlapX = halfX - Math.abs(dx);
+                    const overlapZ = halfZ - Math.abs(dz);
+                    if (overlapX > 0 && overlapZ > 0) {
+                        if (overlapX < overlapZ) {
+                            return new THREE.Vector3(Math.sign(dx)*overlapX, 0, 0);
+                        } else {
+                            return new THREE.Vector3(0, 0, Math.sign(dz)*overlapZ);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function playerCollides(pos) {
+            return getPlayerPushOut(pos) !== null;
+        }
+
+        function tryMoveHorizontal(deltaX, deltaZ) {
+            const newPos = player.position.clone();
+            newPos.x += deltaX;
+            newPos.z += deltaZ;
+
+            // Bloquear saída da trincheira sem pulo:
+            // Se o chão na nova posição é mais alto que a posição atual do jogador,
+            // ele não pode sair andando — precisa pular.
+            const currentFloor = getTrenchFloor(player.position.x, player.position.z);
+            const newFloor     = getTrenchFloor(newPos.x, newPos.z);
+            const floorDiff    = newFloor - currentFloor;
+            if (floorDiff > 0.05 && player.position.y < player.height + newFloor - 0.05) {
+                return false; // parede invisível — exige pulo para sair
+            }
+            
+            // Resolve collisions with push-out (up to 5 iterations)
+            for (let iter = 0; iter < 5; iter++) {
+                const push = getPlayerPushOut(newPos);
+                if (!push) {
+                    player.position.x = newPos.x;
+                    player.position.z = newPos.z;
+                    // Snap Y down se entrou numa trincheira (descida é livre)
+                    const destFloor = getTrenchFloor(newPos.x, newPos.z);
+                    const neededY = player.height + destFloor;
+                    if (destFloor < currentFloor && player.position.y > neededY) {
+                        // deixa a gravidade resolver a descida naturalmente
+                    }
+                    return true;
+                }
+                if (push.y > 0) {
+                    player.position.x = newPos.x;
+                    player.position.z = newPos.z;
+                    const destFloor = getTrenchFloor(newPos.x, newPos.z);
+                    const neededY = player.height + destFloor;
+                    if (player.position.y < neededY) {
+                        player.position.y = neededY;
+                        player.velocity.y = 0;
+                        player.onGround = true;
+                    }
+                    return true;
+                }
+                newPos.x += push.x;
+                newPos.z += push.z;
+            }
+            
+            // Try step-up (só para pequenos degraus, não para sair de trincheira)
+            const stepHeight = 0.3;
+            for (let yOffset = 0.1; yOffset <= stepHeight; yOffset += 0.1) {
+                const testPos = player.position.clone();
+                testPos.x += deltaX;
+                testPos.z += deltaZ;
+                testPos.y += yOffset;
+                if (!playerCollides(testPos)) {
+                    player.position.copy(testPos);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function applyGravity(delta) {
+            const oldY = player.position.y;
+            player.position.y += player.velocity.y * delta;
+            
+            const floorY2 = getTrenchFloor(player.position.x, player.position.z);
+            const groundLevel = player.height + floorY2;
+
+            if (playerCollides(player.position)) {
+                if (player.velocity.y < 0) {
+                    let low = Math.min(oldY, player.position.y);
+                    let high = oldY;
+                    let bestY = oldY;
+                    for (let step = 0; step < 8; step++) {
+                        let mid = (low + high) / 2;
+                        let testPos = player.position.clone();
+                        testPos.y = mid;
+                        if (!playerCollides(testPos)) {
+                            bestY = mid;
+                            low = mid;
+                        } else {
+                            high = mid;
+                        }
+                    }
+                    player.position.y = Math.max(bestY, groundLevel);
+                    player.velocity.y = 0;
+                    player.onGround = true;
+                } else {
+                    player.position.y = oldY;
+                    player.velocity.y = 0;
+                }
+            } else {
+                if (player.position.y <= groundLevel) {
+                    player.position.y = groundLevel;
+                    player.velocity.y = 0;
+                    player.onGround = true;
+                } else {
+                    player.onGround = false;
+                }
+            }
+        }
+
+        function updatePlayer(delta) {
+            if (!player.alive) return; // morto não se move
+            
+            player.velocity.y -= 15.0 * delta;
+            
+            if (player.jumpCooldown > 0) {
+                player.jumpCooldown -= delta;
+            }
+            
+            if (moveState.jump && player.onGround && player.jumpCooldown <= 0) {
+                player.velocity.y = 7.5;
+                player.onGround = false;
+                player.jumpCooldown = 0.3;
+            }
+            
+            if (document.pointerLockElement) {
+                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                
+                forward.y = 0;
+                right.y = 0;
+                
+                if (forward.length() > 0) forward.normalize();
+                if (right.length() > 0) right.normalize();
+                
+                const moveDir = new THREE.Vector3(0, 0, 0);
+                
+                if (moveState.forward) moveDir.add(forward);
+                if (moveState.backward) moveDir.sub(forward);
+                if (moveState.right) moveDir.add(right);
+                if (moveState.left) moveDir.sub(right);
+                
+                if (moveDir.length() > 0) {
+                    moveDir.normalize();
+                    const targetVelX = moveDir.x * player.speed;
+                    const targetVelZ = moveDir.z * player.speed;
+                    player.velocity.x += (targetVelX - player.velocity.x) * 8 * delta;
+                    player.velocity.z += (targetVelZ - player.velocity.z) * 8 * delta;
+                    document.getElementById('debug-move').textContent = 'ANDANDO';
+                } else {
+                    player.velocity.x *= 0.9;
+                    player.velocity.z *= 0.9;
+                    if (Math.abs(player.velocity.x) < 0.01) player.velocity.x = 0;
+                    if (Math.abs(player.velocity.z) < 0.01) player.velocity.z = 0;
+                    document.getElementById('debug-move').textContent = 'PARADO';
+                }
+            }
+            
+            const moveX = player.velocity.x * delta;
+            const moveZ = player.velocity.z * delta;
+            if (moveX !== 0) tryMoveHorizontal(moveX, 0);
+            if (moveZ !== 0) tryMoveHorizontal(0, moveZ);
+            
+            applyGravity(delta);
+            
+            const mapLimit = gameMode === '5x5' ? 35 : 19;
+            if (Math.abs(player.position.x) > mapLimit) {
+                player.position.x = Math.sign(player.position.x) * mapLimit;
+                player.velocity.x = 0;
+            }
+            if (Math.abs(player.position.z) > mapLimit) {
+                player.position.z = Math.sign(player.position.z) * mapLimit;
+                player.velocity.z = 0;
+            }
+            
+            camera.position.copy(player.position);
+            
+            if (player.mesh) {
+                player.mesh.position.copy(player.position);
+                // Ancorar o mesh ao piso (considera trincheira)
+                player.mesh.position.y = getTrenchFloor(player.position.x, player.position.z);
+                
+                const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                direction.y = 0;
+                if (direction.length() > 0) {
+                    player.mesh.rotation.y = Math.atan2(direction.x, direction.z);
+                }
+
+                // Animação humanóide com pivots corretos
+                const isMoving = Math.abs(player.velocity.x) + Math.abs(player.velocity.z) > 0.5;
+                const inAir = !player.onGround;
+
+                if (isMoving && player.onGround) {
+                    player.animTime += delta * 8;
+                }
+
+                const swing = (isMoving && player.onGround) ? Math.sin(player.animTime) * 0.55 : 0;
+
+                if (player.hipPivotL) {
+                    if (inAir) {
+                        // Pose de pulo: pernas e braços animados pela velocidade vertical
+                        const jumpBlend = Math.min(Math.abs(player.velocity.y) / 7.5, 1);
+                        const legBend = player.velocity.y > 0
+                            ? jumpBlend * 0.45   // subindo: pernas ligeiramente levantadas
+                            : -jumpBlend * 0.55; // descendo: pernas esticadas para baixo
+
+                        player.hipPivotL.rotation.x = legBend;
+                        player.hipPivotR.rotation.x = legBend;
+
+                        // Braços abertos para equilíbrio no ar
+                        player.shoulderPivL.rotation.x = -0.6;
+                        player.shoulderPivR.rotation.x = -0.6;
+                        player.shoulderPivL.rotation.z =  0.35;
+                        player.shoulderPivR.rotation.z = -0.35;
+                    } else {
+                        // Caminhada/parado
+                        player.hipPivotL.rotation.x =  swing;
+                        player.hipPivotR.rotation.x = -swing;
+
+                        // Braço com arma (shoulderPivL = visual direita) sempre levantado
+                        player.shoulderPivL.rotation.x = -Math.PI * 0.30;
+                        player.shoulderPivL.rotation.z = 0;
+                        // Braço livre balança
+                        player.shoulderPivR.rotation.x = -swing * 0.5;
+                        player.shoulderPivR.rotation.z = 0;
+                    }
+                }
+            }
+            
+            document.getElementById('debug-pos').textContent = 
+                `${player.position.x.toFixed(1)}, ${player.position.y.toFixed(1)}, ${player.position.z.toFixed(1)}`;
+            document.getElementById('debug-vel').textContent = 
+                `${player.velocity.x.toFixed(1)}, ${player.velocity.y.toFixed(1)}, ${player.velocity.z.toFixed(1)}`;
+            document.getElementById('debug-ground').textContent = player.onGround ? 'SIM' : 'NÃO';
+        }
+
+        // --- FÍSICA DOS NPCs: push-out 3D + gravidade ---
+        function applyNPCGravity(npc, delta) {
+            npc.velocity.y -= 18.0 * delta;
+            const oldY = npc.position.y;
+            npc.position.y += npc.velocity.y * delta;
+
+            // Chão dinâmico (suporta trincheiras)
+            const npcFloor = getTrenchFloor(npc.position.x, npc.position.z);
+            if (npc.position.y < npcFloor) {
+                npc.position.y = npcFloor;
+                npc.velocity.y = 0;
+                npc.onGround = true;
+            } else {
+                // Verificar se está em cima de obstáculo (box tops)
+                let landed = false;
+                for (let obs of obstacles) {
+                    if (obs.type === 'box') {
+                        const halfX = obs.size.x / 2 + npc.radius;
+                        const halfZ = obs.size.z / 2 + npc.radius;
+                        const dx = Math.abs(npc.position.x - obs.position.x);
+                        const dz = Math.abs(npc.position.z - obs.position.z);
+                        if (dx < halfX && dz < halfZ) {
+                            if (oldY >= obs.yMax && npc.position.y < obs.yMax) {
+                                npc.position.y = obs.yMax;
+                                npc.velocity.y = 0;
+                                npc.onGround = true;
+                                landed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!landed) {
+                    npc.onGround = npc.position.y <= npcFloor + 0.01;
+                }
+            }
+        }
+
+        // --- ATUALIZAR NPCs com IA melhorada, gravidade e pulo ---
+        function updateNPCs(delta) {
+            for (let npc of npcs) {
+                if (!npc.active) continue;
+                if (npc.shootCooldown > 0) npc.shootCooldown -= delta;
+                if (npc.jumpCooldown > 0) npc.jumpCooldown -= delta;
+            }
+
+            // Determinar alvos
+            for (let npc of npcs) {
+                if (!npc.active) continue;
+
+                let enemies = [];
+                if (npc.team === 'green') {
+                    npcs.forEach(other => {
+                        if (other.active && other.team === 'pink') enemies.push(other);
+                    });
+                } else {
+                    npcs.forEach(other => {
+                        if (other.active && other.team === 'green') enemies.push(other);
+                    });
+                    if (player.alive) {
+                        enemies.push({ position: player.position, team: 'green', radius: player.radius, isPlayer: true });
+                    }
+                }
+
+                let closestEnemy = null;
+                let closestDist = Infinity;
+                for (let enemy of enemies) {
+                    const dist = npc.position.distanceTo(enemy.position);
+                    if (dist < closestDist && dist < 30) {
+                        closestDist = dist;
+                        closestEnemy = enemy;
+                    }
+                }
+                npc.targetEnemy = closestEnemy;
+            }
+
+            // Movimento + gravidade + pulo
+            for (let npc of npcs) {
+                if (!npc.active) continue;
+
+                // --- STEERING: direção desejada ---
+                let desiredDir = new THREE.Vector3(0, 0, 0);
+
+                if (npc.targetEnemy) {
+                    const toEnemy = new THREE.Vector3().subVectors(npc.targetEnemy.position, npc.position);
+                    toEnemy.y = 0;
+                    const distH = toEnemy.length();
+                    if (distH > 1.5) desiredDir.copy(toEnemy.normalize());
+                } else {
+                    npc.timer += delta;
+                    if (npc.timer > 2.5 || npc.desiredDir === undefined) {
+                        npc.timer = 0;
+                        const angle = Math.random() * Math.PI * 2;
+                        npc.desiredDir = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+                    }
+                    desiredDir.copy(npc.desiredDir);
+                }
+
+                // --- DESVIO DE OBSTÁCULOS (obstacle avoidance steering) ---
+                if (desiredDir.length() > 0.01) {
+                    const ahead = 1.8;          // distância de "visão à frente"
+                    const sideProbe = 1.0;       // distância lateral do probe
+                    const probeRadius = npc.radius + 0.15;
+
+                    // Probe central (à frente)
+                    const frontProbe = npc.position.clone().addScaledVector(desiredDir, ahead);
+                    const frontBlocked = getNPCPushOut(frontProbe, probeRadius) !== null;
+
+                    if (frontBlocked) {
+                        // Calcular perpendicular à direção desejada
+                        const perp = new THREE.Vector3(-desiredDir.z, 0, desiredDir.x);
+
+                        // Probes laterais
+                        const leftProbe  = frontProbe.clone().addScaledVector(perp,  sideProbe);
+                        const rightProbe = frontProbe.clone().addScaledVector(perp, -sideProbe);
+
+                        const leftBlocked  = getNPCPushOut(leftProbe,  probeRadius) !== null;
+                        const rightBlocked = getNPCPushOut(rightProbe, probeRadius) !== null;
+
+                        if (!leftBlocked && rightBlocked) {
+                            // Desviar para a esquerda
+                            desiredDir.addScaledVector(perp,  2.5).normalize();
+                        } else if (!rightBlocked && leftBlocked) {
+                            // Desviar para a direita
+                            desiredDir.addScaledVector(perp, -2.5).normalize();
+                        } else if (!leftBlocked && !rightBlocked) {
+                            // Ambos livres — preferir o lado mais próximo do destino
+                            const bias = npc.stuckBias || 1;
+                            desiredDir.addScaledVector(perp, bias * 2.0).normalize();
+                        } else {
+                            // Ambos bloqueados — recuar e escolher nova direção aleatória
+                            const angle = Math.random() * Math.PI * 2;
+                            desiredDir.set(Math.sin(angle), 0, Math.cos(angle));
+                            npc.desiredDir = desiredDir.clone();
+                            npc.stuckBias = (npc.stuckBias || 1) * -1; // alternar lado
+                        }
+                    } else {
+                        npc.stuckBias = 1; // resetar bias quando caminho livre
+                    }
+                }
+
+                // Aplicar direção desejada à velocidade
+                if (desiredDir.length() > 0.01) {
+                    const targetSpeed = npc.speed;
+                    npc.velocity.x += (desiredDir.x * targetSpeed - npc.velocity.x) * 10 * delta;
+                    npc.velocity.z += (desiredDir.z * targetSpeed - npc.velocity.z) * 10 * delta;
+                } else {
+                    npc.velocity.x *= 0.85;
+                    npc.velocity.z *= 0.85;
+                }
+
+                // --- DETECÇÃO DE TRAVADO (fallback) ---
+                const movedDist = Math.sqrt(
+                    (npc.position.x - npc.lastX) ** 2 + (npc.position.z - npc.lastZ) ** 2
+                );
+                npc.stuckTimer += delta;
+                if (npc.stuckTimer > 0.6) {
+                    if (movedDist < 0.08 && (Math.abs(npc.velocity.x) + Math.abs(npc.velocity.z)) > 0.3) {
+                        // Forçar nova direção aleatória
+                        const angle = Math.random() * Math.PI * 2;
+                        npc.desiredDir = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+                        npc.velocity.x = npc.desiredDir.x * npc.speed * 0.6;
+                        npc.velocity.z = npc.desiredDir.z * npc.speed * 0.6;
+                        // Tentar pular se for barricada baixa
+                        if (npc.onGround && npc.jumpCooldown <= 0) {
+                            npc.velocity.y = 6.0;
+                            npc.onGround = false;
+                            npc.jumpCooldown = 1.2;
+                        }
+                    }
+                    npc.stuckTimer = 0;
+                    npc.lastX = npc.position.x;
+                    npc.lastZ = npc.position.z;
+                }
+
+                // Pulo para alcançar inimigo em plataforma elevada
+                if (npc.targetEnemy && npc.onGround && npc.jumpCooldown <= 0) {
+                    const heightDiff = npc.targetEnemy.position.y - npc.position.y;
+                    if (heightDiff > 0.8 && npc.position.distanceTo(npc.targetEnemy.position) < 5) {
+                        npc.velocity.y = 7.5;
+                        npc.onGround = false;
+                        npc.jumpCooldown = 1.5;
+                    }
+                }
+
+                // Pulo para SAIR de trincheira funda (quando há inimigo fora)
+                const npcTrenchFloor = getTrenchFloor(npc.position.x, npc.position.z);
+                if (npcTrenchFloor < -0.5 && npc.onGround && npc.jumpCooldown <= 0) {
+                    // Está dentro de uma trincheira — verifica se tem destino fora
+                    const hasEnemyOutside = npc.targetEnemy && getTrenchFloor(npc.targetEnemy.position.x, npc.targetEnemy.position.z) >= -0.1;
+                    const wantsToLeave = hasEnemyOutside || Math.random() < 0.02;
+                    if (wantsToLeave) {
+                        npc.velocity.y = 7.5;
+                        npc.onGround = false;
+                        npc.jumpCooldown = 2.0;
+                    }
+                }
+
+                // Mover horizontalmente — bloquear saída da trincheira sem pulo
+                const npcCurrentFloor = getTrenchFloor(npc.position.x, npc.position.z);
+                const npcNewX = npc.position.x + npc.velocity.x * delta;
+                const npcNewZ = npc.position.z + npc.velocity.z * delta;
+                const npcNewFloor = getTrenchFloor(npcNewX, npcNewZ);
+                const npcFloorDiff = npcNewFloor - npcCurrentFloor;
+                if (npcFloorDiff > 0.05 && !npc.onGround === false && npc.position.y < npcNewFloor - 0.05) {
+                    // Bloqueado — NPC precisa pular para sair, não mover horizontalmente
+                } else {
+                    npc.position.x += npc.velocity.x * delta;
+                    npc.position.z += npc.velocity.z * delta;
+                }
+
+                // Boundary
+                const npcMapLimit = gameMode === '5x5' ? 34 : 18;
+                if (Math.abs(npc.position.x) > npcMapLimit) {
+                    npc.position.x = Math.sign(npc.position.x) * npcMapLimit;
+                    npc.velocity.x *= -0.5;
+                }
+                if (Math.abs(npc.position.z) > npcMapLimit) {
+                    npc.position.z = Math.sign(npc.position.z) * npcMapLimit;
+                    npc.velocity.z *= -0.5;
+                }
+
+                // Push-out horizontal de obstáculos
+                for (let iter = 0; iter < 5; iter++) {
+                    const push = getNPCPushOut(npc.position, npc.radius);
+                    if (!push) break;
+                    npc.position.x += push.x;
+                    npc.position.z += push.z;
+                    if (Math.abs(push.x) > Math.abs(push.z)) {
+                        npc.velocity.x = Math.sign(push.x) * Math.abs(npc.velocity.x) * 0.3;
+                    } else {
+                        npc.velocity.z = Math.sign(push.z) * Math.abs(npc.velocity.z) * 0.3;
+                    }
+                }
+
+                // Gravidade e aterrissagem
+                applyNPCGravity(npc, delta);
+
+                // Atualizar mesh
+                npc.mesh.position.copy(npc.position);
+                npc.mesh.position.y = getTrenchFloor(npc.position.x, npc.position.z);
+
+                // Rotação
+                if (npc.targetEnemy) {
+                    const dir = new THREE.Vector3().subVectors(npc.targetEnemy.position, npc.position).normalize();
+                    npc.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+                } else {
+                    const horizSpeed = Math.sqrt(npc.velocity.x**2 + npc.velocity.z**2);
+                    if (horizSpeed > 0.3) {
+                        npc.mesh.rotation.y = Math.atan2(npc.velocity.x, npc.velocity.z);
+                    }
+                }
+
+                // Animação humanóide de pernas/braços
+                const horizSpeed2 = Math.sqrt(npc.velocity.x**2 + npc.velocity.z**2);
+                const npcInAir = !npc.onGround;
+                if (horizSpeed2 > 0.3 && npc.onGround) {
+                    npc.animTime += 8 * delta;
+                }
+                const swing = (horizSpeed2 > 0.3 && npc.onGround) ? Math.sin(npc.animTime) * 0.55 : 0;
+
+                // Blend de mira: interpola suavemente entre 0 (relaxado) e 1 (mirando)
+                const aimTarget = npc.targetEnemy ? 1.0 : 0.0;
+                npc.aimBlend = npc.aimBlend !== undefined
+                    ? npc.aimBlend + (aimTarget - npc.aimBlend) * Math.min(1, delta * 6)
+                    : 0;
+                const aim = npc.aimBlend;
+
+                if (npc.legL) {
+                    if (npcInAir) {
+                        const jb = Math.min(Math.abs(npc.velocity.y) / 7.5, 1);
+                        const lb = npc.velocity.y > 0 ? jb * 0.4 : -jb * 0.5;
+                        npc.legL.rotation.x = lb;
+                        npc.legR.rotation.x = lb;
+                        npc.armL.rotation.x = -0.6;
+                        npc.armR.rotation.x = -0.6;
+                        npc.armL.rotation.z =  0.3;
+                        npc.armR.rotation.z = -0.3;
+                        npc.torso.rotation.x = 0;
+                        if (npc.torso.children[0]) npc.torso.children[0].rotation.x = 0; // neck
+                    } else {
+                        // Pernas: reduz balanço ao mirar (NPC fica mais parado/tenso)
+                        const swingReduced = swing * (1 - aim * 0.7);
+                        npc.legL.rotation.x =  swingReduced;
+                        npc.legR.rotation.x = -swingReduced;
+
+                        // Braço direito (sem arma): balanço normal → sobe levemente ao mirar
+                        npc.armR.rotation.x = -swing * 0.5 * (1 - aim) + (-0.55 * aim);
+                        npc.armR.rotation.z = -0.15 * aim; // fecha levemente para segurar arma
+
+                        // Braço esquerdo (com arma): sobe até horizontal ao mirar
+                        const armAimAngle = -Math.PI * 0.48 * aim;
+                        npc.armL.rotation.x = swing * 0.5 * (1 - aim) + armAimAngle;
+                        npc.armL.rotation.z = 0;
+
+                        // Compensar rotação da arma: cano aponta para frente (inimigo)
+                        // O braço subiu armAimAngle → contra-rotacionar a arma no mesmo eixo
+                        if (npc.weapon) {
+                            npc.weapon.rotation.x = -armAimAngle; // cancela a subida do braço
+                        }
+
+                        // Torso inclina levemente para frente ao mirar
+                        npc.torso.rotation.x = -0.22 * aim;
+
+                        // Cabeça (neckPivot = torso.children[0]) inclina junto
+                        const neck = npc.torso.children[0]; // npcNeck
+                        if (neck) neck.rotation.x = 0.12 * aim;
+                    }
+                }
+            }
+
+            // Colisão entre NPCs (2D)
+            for (let iter = 0; iter < 4; iter++) {
+                for (let i = 0; i < npcs.length; i++) {
+                    const npcA = npcs[i];
+                    if (!npcA.active) continue;
+                    for (let j = i + 1; j < npcs.length; j++) {
+                        const npcB = npcs[j];
+                        if (!npcB.active) continue;
+                        const dx = npcA.position.x - npcB.position.x;
+                        const dz = npcA.position.z - npcB.position.z;
+                        const dist = Math.sqrt(dx*dx + dz*dz);
+                        const minDist = npcA.radius + npcB.radius;
+                        if (dist < minDist && dist > 0.001) {
+                            const overlap = (minDist - dist) * 0.5;
+                            npcA.position.x += (dx/dist)*overlap;
+                            npcA.position.z += (dz/dist)*overlap;
+                            npcB.position.x -= (dx/dist)*overlap;
+                            npcB.position.z -= (dz/dist)*overlap;
+                            npcA.mesh.position.copy(npcA.position);
+                            npcB.mesh.position.copy(npcB.position);
+                        }
+                    }
+                }
+            }
+
+            // Colisão jogador-NPC
+            if (player.alive) {
+                for (let npc of npcs) {
+                    if (!npc.active) continue;
+                    const dx = player.position.x - npc.position.x;
+                    const dz = player.position.z - npc.position.z;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    const minDist = player.radius + npc.radius;
+                    if (dist < minDist && dist > 0.001) {
+                        const overlap = minDist - dist;
+                        player.position.x += (dx/dist)*overlap*0.5;
+                        player.position.z += (dz/dist)*overlap*0.5;
+                        npc.position.x -= (dx/dist)*overlap*0.5;
+                        npc.position.z -= (dz/dist)*overlap*0.5;
+                        npc.mesh.position.copy(npc.position);
+                    }
+                }
+            }
+
+            // Tiros dos NPCs — munição individual + recarga automática
+            for (let npc of npcs) {
+                if (!npc.active) continue;
+
+                // Recarga automática
+                if (npc.ammo <= 0) {
+                    npc.reloadTimer += delta;
+                    if (npc.reloadTimer >= 1.5) {
+                        npc.ammo = npc.maxAmmo;
+                        npc.reloadTimer = 0;
+                    }
+                    continue; // sem bala, não atira
+                }
+
+                if (npc.shootCooldown > 0 || !npc.targetEnemy) continue;
+                const distToEnemy = npc.position.distanceTo(npc.targetEnemy.position);
+                if (distToEnemy < 25 && hasLineOfSight(npc.position, npc.targetEnemy.position)) {
+                    // Se o alvo é o player, position.y = 1.8 (altura da câmera).
+                    // O centro do corpo do player fica em y - altura/2 ≈ 0.9.
+                    // Para NPCs inimigos, position.y = 0 (chão), centro em +0.9.
+                    const targetIsPlayer = npc.targetEnemy.isPlayer === true;
+                    const targetBodyY = targetIsPlayer
+                        ? npc.targetEnemy.position.y - 0.9   // câmera → centro do torso
+                        : npc.targetEnemy.position.y + 0.9;  // chão    → centro do torso
+
+                    const direction = new THREE.Vector3().subVectors(
+                        new THREE.Vector3(npc.targetEnemy.position.x, targetBodyY, npc.targetEnemy.position.z),
+                        npc.position.clone().add(new THREE.Vector3(0, 1.2, 0))
+                    ).normalize();
+                    direction.x += (Math.random() - 0.5) * 0.12;
+                    direction.z += (Math.random() - 0.5) * 0.12;
+                    direction.normalize();
+                    const shootPos = npc.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+                    // Disparar usando a função genérica (sem checar ammo global)
+                    const bulletGeo = new THREE.SphereGeometry(0.12, 8, 8);
+                    const bulletMat = new THREE.MeshStandardMaterial({
+                        color: npc.team === 'green' ? 0x00ff00 : 0xff6b6b,
+                        emissive: 0x220000
+                    });
+                    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+                    bullet.position.copy(shootPos);
+                    bullet.position.addScaledVector(direction, 1);
+                    bullet.castShadow = true;
+                    scene.add(bullet);
+                    projectiles.push({
+                        mesh: bullet,
+                        velocity: direction.clone().multiplyScalar(25),
+                        life: 150,
+                        damage: 100,
+                        isSpecial: false,
+                        shooterTeam: npc.team,
+                        prevPos: bullet.position.clone(),
+                        radius: 0.12
+                    });
+                    npc.ammo--;
+                    npc.shootCooldown = 0.25 + Math.random() * 0.15; // cadência mais rápida
+                    if (npc.ammo <= 0) npc.reloadTimer = 0; // inicia recarga
+                }
+            }
+        }
+
+        // Returns 2D push-out vector for a circle at (position) with given radius against all obstacles
+        function getNPCPushOut(position, radius) {
+            const floorAtNPC = getTrenchFloor(position.x, position.z);
+            for (let obs of obstacles) {
+                // Skip obstacles on a different floor level
+                const floorAtObs = getTrenchFloor(obs.position.x, obs.position.z);
+                if (Math.abs(floorAtObs - floorAtNPC) > 0.5) continue;
+
+                if (obs.type === 'cylinder') {
+                    const dx = position.x - obs.position.x;
+                    const dz = position.z - obs.position.z;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    const minDist = radius + obs.radius;
+                    if (dist < minDist) {
+                        const overlap = minDist - dist;
+                        if (dist > 0.001) {
+                            return new THREE.Vector3((dx/dist)*overlap, 0, (dz/dist)*overlap);
+                        } else {
+                            return new THREE.Vector3(overlap, 0, 0);
+                        }
+                    }
+                } else if (obs.type === 'box') {
+                    const closestX = Math.max(obs.position.x - obs.size.x/2, Math.min(position.x, obs.position.x + obs.size.x/2));
+                    const closestZ = Math.max(obs.position.z - obs.size.z/2, Math.min(position.z, obs.position.z + obs.size.z/2));
+                    const dx = position.x - closestX;
+                    const dz = position.z - closestZ;
+                    const dist = Math.sqrt(dx*dx + dz*dz);
+                    if (dist < radius) {
+                        const overlap = radius - dist;
+                        if (dist > 0.001) {
+                            return new THREE.Vector3((dx/dist)*overlap, 0, (dz/dist)*overlap);
+                        } else {
+                            return new THREE.Vector3(overlap, 0, 0);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function checkCollision2D(position, radius) {
+            if (Math.abs(position.x) > 19) return true;
+            if (Math.abs(position.z) > 19) return true;
+            return getNPCPushOut(position, radius) !== null;
+        }
+
+        function hasLineOfSight(from, to) {
+            const direction = new THREE.Vector3().subVectors(to, from).normalize();
+            const distance = from.distanceTo(to);
+            
+            for (let obs of obstacles) {
+                if (obs.type === 'cylinder') {
+                    const toObs = new THREE.Vector3().subVectors(obs.position, from);
+                    const proj = toObs.dot(direction);
+                    if (proj > 0 && proj < distance) {
+                        const closestPoint = new THREE.Vector3().copy(from).addScaledVector(direction, proj);
+                        const distToAxis = Math.sqrt(
+                            (closestPoint.x - obs.position.x)**2 + 
+                            (closestPoint.z - obs.position.z)**2
+                        );
+                        if (distToAxis < obs.radius + 0.2) {
+                            if (closestPoint.y >= obs.yMin && closestPoint.y <= obs.yMax) {
+                                return false;
+                            }
+                        }
+                    }
+                } else if (obs.type === 'box') {
+                    // Ray-AABB intersection (slab method)
+                    const boxMin = new THREE.Vector3(
+                        obs.position.x - obs.size.x/2,
+                        obs.yMin,
+                        obs.position.z - obs.size.z/2
+                    );
+                    const boxMax = new THREE.Vector3(
+                        obs.position.x + obs.size.x/2,
+                        obs.yMax,
+                        obs.position.z + obs.size.z/2
+                    );
+                    const eps = 1e-8;
+                    const dirX = direction.x || eps, dirY = direction.y || eps, dirZ = direction.z || eps;
+                    const t1x = (boxMin.x - from.x) / dirX;
+                    const t2x = (boxMax.x - from.x) / dirX;
+                    const t1y = (boxMin.y - from.y) / dirY;
+                    const t2y = (boxMax.y - from.y) / dirY;
+                    const t1z = (boxMin.z - from.z) / dirZ;
+                    const t2z = (boxMax.z - from.z) / dirZ;
+                    const tmin = Math.max(Math.min(t1x,t2x), Math.min(t1y,t2y), Math.min(t1z,t2z));
+                    const tmax = Math.min(Math.max(t1x,t2x), Math.max(t1y,t2y), Math.max(t1z,t2z));
+                    if (tmax >= Math.max(0, tmin) && tmin < distance) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function checkProjectileCollision(prevPos, currentPos, bulletRadius) {
+            const projLimit = gameMode === '5x5' ? 38 : 20;
+            if (Math.abs(currentPos.x) > projLimit || Math.abs(currentPos.z) > projLimit || currentPos.y < -2.5 || currentPos.y > 10) {
+                return true;
+            }
+
+            // Colisão com o chão:
+            // Se a bala está sobre a abertura de uma trincheira, deixar passar até o piso (-1.8).
+            // Fora da abertura, colidir com y=0 (tile de grama).
+            const overTrench = _inTrenchOpening(currentPos.x, currentPos.z, 0);
+            if (overTrench) {
+                // Dentro da vala: matar apenas no piso (-1.8)
+                if (currentPos.y < -1.75) return true;
+            } else {
+                // Solo normal: matar ao tocar y=0
+                if (currentPos.y < 0.0) return true;
+            }
+
+            for (let obs of obstacles) {
+                // Pular obstáculos em zona de piso diferente da bala
+                // (evita colisão fantasma de árvores/troncos quando bala está dentro da trincheira)
+                const floorAtObs    = getTrenchFloor(obs.position.x, obs.position.z);
+                const floorAtBullet = getTrenchFloor(currentPos.x, currentPos.z);
+                if (Math.abs(floorAtObs - floorAtBullet) > 0.5) continue;
+
+                if (obs.type === 'cylinder') {
+                    const dx = currentPos.x - obs.position.x;
+                    const dz = currentPos.z - obs.position.z;
+                    const distHoriz = Math.sqrt(dx*dx + dz*dz);
+                    
+                    if (distHoriz < obs.radius + bulletRadius) {
+                        if (currentPos.y >= obs.yMin && currentPos.y <= obs.yMax) {
+                            return true;
+                        }
+                        const dir = new THREE.Vector3().subVectors(currentPos, prevPos);
+                        const len = dir.length();
+                        if (len > 0.001) {
+                            const toCyl = new THREE.Vector3().subVectors(obs.position, prevPos);
+                            const t = toCyl.dot(dir) / (len * len);
+                            if (t >= 0 && t <= 1) {
+                                const closestPoint = new THREE.Vector3().copy(prevPos).addScaledVector(dir, t * len);
+                                const distToAxis = Math.sqrt(
+                                    (closestPoint.x - obs.position.x)**2 + 
+                                    (closestPoint.z - obs.position.z)**2
+                                );
+                                if (distToAxis < obs.radius + bulletRadius) {
+                                    if (closestPoint.y >= obs.yMin && closestPoint.y <= obs.yMax) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (obs.type === 'box') {
+                    const boxMin = new THREE.Vector3(
+                        obs.position.x - obs.size.x/2,
+                        obs.yMin,
+                        obs.position.z - obs.size.z/2
+                    );
+                    const boxMax = new THREE.Vector3(
+                        obs.position.x + obs.size.x/2,
+                        obs.yMax,
+                        obs.position.z + obs.size.z/2
+                    );
+                    
+                    if (currentPos.x + bulletRadius > boxMin.x && currentPos.x - bulletRadius < boxMax.x &&
+                        currentPos.y + bulletRadius > boxMin.y && currentPos.y - bulletRadius < boxMax.y &&
+                        currentPos.z + bulletRadius > boxMin.z && currentPos.z - bulletRadius < boxMax.z) {
+                        return true;
+                    }
+                    
+                    const dir = new THREE.Vector3().subVectors(currentPos, prevPos);
+                    const len = dir.length();
+                    if (len > 0.001) {
+                        const invDir = new THREE.Vector3(1/dir.x, 1/dir.y, 1/dir.z);
+                        const t1 = (boxMin.x - prevPos.x) * invDir.x;
+                        const t2 = (boxMax.x - prevPos.x) * invDir.x;
+                        const t3 = (boxMin.y - prevPos.y) * invDir.y;
+                        const t4 = (boxMax.y - prevPos.y) * invDir.y;
+                        const t5 = (boxMin.z - prevPos.z) * invDir.z;
+                        const t6 = (boxMax.z - prevPos.z) * invDir.z;
+                        
+                        const tmin = Math.max(Math.min(t1, t2), Math.min(t3, t4), Math.min(t5, t6));
+                        const tmax = Math.min(Math.max(t1, t2), Math.max(t3, t4), Math.max(t5, t6));
+                        
+                        if (tmax >= tmin && tmax >= 0 && tmin <= 1) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // --- ATUALIZAR PROJÉTEIS ---
+        function updateProjectiles(delta) {
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const p = projectiles[i];
+                
+                p.prevPos.copy(p.mesh.position);
+                p.mesh.position.addScaledVector(p.velocity, delta);
+                p.life -= 1;
+                
+                if (checkProjectileCollision(p.prevPos, p.mesh.position, p.radius)) {
+                    for (let k = 0; k < 5; k++) {
+                        const splatGeo = new THREE.SphereGeometry(0.2, 3);
+                        const splatMat = new THREE.MeshStandardMaterial({ 
+                            color: p.isSpecial ? 0xffdf00 : (p.shooterTeam === 'green' ? 0x00ff00 : 0xff6b6b)
+                        });
+                        const splat = new THREE.Mesh(splatGeo, splatMat);
+                        splat.position.copy(p.mesh.position);
+                        splat.position.x += (Math.random() - 0.5) * 0.5;
+                        splat.position.y += Math.random() * 0.5;
+                        splat.position.z += (Math.random() - 0.5) * 0.5;
+                        scene.add(splat);
+                        
+                        setTimeout(() => scene.remove(splat), 2000);
+                    }
+                    
+                    scene.remove(p.mesh);
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+                
+                // Colisão com NPCs — hitbox: corpo (cápsula) + cabeça (esfera)
+                let hit = false;
+                for (let j = 0; j < npcs.length; j++) {
+                    const npc = npcs[j];
+                    if (!npc.active) continue;
+
+                    // Verifica hit em dois volumes: corpo e cabeça
+                    // Corpo: esfera centrada em npc.position.y + 0.85, raio 0.5
+                    // Cabeça: esfera centrada em npc.position.y + 1.65, raio 0.30
+                    const hitVolumes = [
+                        { cx: npc.position.x, cy: npc.position.y + 0.85, cz: npc.position.z, r: 0.50 }, // corpo
+                        { cx: npc.position.x, cy: npc.position.y + 1.65, cz: npc.position.z, r: 0.32 }, // cabeça
+                    ];
+
+                    for (const vol of hitVolumes) {
+                        const combinedR = p.radius + vol.r;
+
+                        // Teste pontual atual
+                        const dx = p.mesh.position.x - vol.cx;
+                        const dy = p.mesh.position.y - vol.cy;
+                        const dz = p.mesh.position.z - vol.cz;
+                        if (Math.sqrt(dx*dx + dy*dy + dz*dz) < combinedR) {
+                            hit = true; break;
+                        }
+
+                        // Swept test (bala rápida não pula o alvo)
+                        const dir = new THREE.Vector3().subVectors(p.mesh.position, p.prevPos);
+                        const len = dir.length();
+                        if (len > 0.001) {
+                            const toVol = new THREE.Vector3(vol.cx - p.prevPos.x, vol.cy - p.prevPos.y, vol.cz - p.prevPos.z);
+                            const t = Math.max(0, Math.min(1, toVol.dot(dir) / (len * len)));
+                            const closest = new THREE.Vector3().copy(p.prevPos).addScaledVector(dir, t * len);
+                            const ddx = closest.x - vol.cx;
+                            const ddy = closest.y - vol.cy;
+                            const ddz = closest.z - vol.cz;
+                            if (Math.sqrt(ddx*ddx + ddy*ddy + ddz*ddz) < combinedR) {
+                                hit = true; break;
+                            }
+                        }
+                    }
+                    
+                    if (hit) {
+                        npc.health -= 1;
+
+                        // Mancha de tinta no NPC atingido
+                        paintCharacter([npc.torso], p.mesh.position, p.shooterTeam);
+
+                        if (npc.health <= 0) {
+                            npc.active = false;
+                            scene.remove(npc.mesh);
+                            
+                            if (p.shooterTeam === 'green') {
+                                if (npc.team === 'pink') {
+                                    greenScore += 10;
+                                } else if (npc.team === 'green') {
+                                    greenScore -= 5;
+                                }
+                            } else if (p.shooterTeam === 'pink') {
+                                if (npc.team === 'green') {
+                                    pinkScore += 10;
+                                } else if (npc.team === 'pink') {
+                                    pinkScore -= 5;
+                                }
+                            }
+                            updateTeamDisplay();
+                        } else {
+                            npc.torso.material.color.setHex(0xffffff);
+                            setTimeout(() => {
+                                if (npc.active && npc.mesh) {
+                                    const originalColor = npc.team === 'green' ? 0x00aa00 : 0xdd3355;
+                                    npc.torso.material.color.setHex(originalColor);
+                                }
+                            }, 200);
+                        }
+                        
+                        scene.remove(p.mesh);
+                        projectiles.splice(i, 1);
+                        break;
+                    }
+                }
+                
+                if (hit) continue;
+                
+                // Colisão com jogador (só se vivo)
+                if (player.alive) {
+                    const playerCenter = player.position.clone().add(new THREE.Vector3(0, -0.9, 0));
+                    const dxP = p.mesh.position.x - playerCenter.x;
+                    const dyP = p.mesh.position.y - playerCenter.y;
+                    const dzP = p.mesh.position.z - playerCenter.z;
+                    const distP = Math.sqrt(dxP*dxP + dyP*dyP + dzP*dzP);
+                    const combinedRadiusP = p.radius + player.radius;
+                    
+                    if (distP < combinedRadiusP) {
+                        hit = true;
+                    } else {
+                        const dir = new THREE.Vector3().subVectors(p.mesh.position, p.prevPos);
+                        const len = dir.length();
+                        if (len > 0.001) {
+                            const toPlayer = new THREE.Vector3().subVectors(playerCenter, p.prevPos);
+                            const t = toPlayer.dot(dir) / (len * len);
+                            
+                            if (t >= 0 && t <= 1) {
+                                const closestPoint = new THREE.Vector3().copy(p.prevPos).addScaledVector(dir, t * len);
+                                const distToPlayer = closestPoint.distanceTo(playerCenter);
+                                if (distToPlayer < combinedRadiusP) {
+                                    hit = true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (hit) {
+                        if (p.shooterTeam !== player.team) {
+                            playerHealth -= 1;
+                            document.getElementById('player-health-text').textContent = `Vida: ${playerHealth}`;
+                            document.getElementById('health-fill').style.width = (playerHealth / 3 * 100) + '%';
+
+                            // Mancha de tinta no jogador
+                            paintCharacter([player.bodyMesh, player.headMesh], p.mesh.position, p.shooterTeam);
+                            
+                            if (playerHealth <= 0) {
+                                player.alive = false;
+                                if (player.mesh) player.mesh.visible = false;
+                                const deathMsg = document.getElementById('death-message');
+                                deathMsg.style.display = 'block';
+                                setTimeout(() => { deathMsg.style.display = 'none'; }, 5000);
+                                camera.position.set(0, 12, 18);
+                                camera.rotation.order = 'YXZ';
+                                yaw = Math.PI;
+                                pitch = -0.45;
+                                camera.rotation.y = yaw;
+                                camera.rotation.x = pitch;
+                                spectatorHint.style.display = 'block';
+                            }
+                            
+                            updateTeamDisplay();
+                        }
+                        
+                        scene.remove(p.mesh);
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+                
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
+
+        // --- CONDIÇÃO DE VITÓRIA ---
+        function checkVictoryCondition() {
+            const greenNPCsAlive = npcs.some(n => n.team === 'green' && n.active);
+            const pinkNPCsAlive = npcs.some(n => n.team === 'pink' && n.active);
+            
+            const victoryDiv = document.getElementById('victory-message');
+            
+            if (!pinkNPCsAlive && (greenNPCsAlive || player.alive)) {
+                victoryDiv.style.display = 'block';
+                victoryDiv.innerHTML = '🏆 TIME VERDE VENCEU! 🏆';
+                victoryDiv.style.color = '#00ff00';
+                spectatorHint.style.display = 'none';
+            }
+            else if (!greenNPCsAlive && !player.alive && pinkNPCsAlive) {
+                victoryDiv.style.display = 'block';
+                victoryDiv.innerHTML = '🏆 TIME ROSA VENCEU! 🏆';
+                victoryDiv.style.color = '#ff6b6b';
+                spectatorHint.style.display = 'none';
+            }
+            else if (!greenNPCsAlive && !pinkNPCsAlive && !player.alive) {
+                victoryDiv.style.display = 'block';
+                victoryDiv.innerHTML = '🤝 EMPATE! 🤝';
+                victoryDiv.style.color = '#ffdf00';
+                spectatorHint.style.display = 'none';
+            } else {
+                victoryDiv.style.display = 'none';
+            }
+        }
+
+        // --- BOTÃO REINICIAR ---
+        const spectatorHint = document.getElementById('spectator-hint');
+
+        document.getElementById('restart-button').addEventListener('click', () => {
+            projectiles.forEach(p => scene.remove(p.mesh));
+            projectiles.length = 0;
+            document.getElementById('victory-message').style.display = 'none';
+            document.getElementById('death-message').style.display = 'none';
+            spectatorHint.style.display = 'none';
+            document.getElementById('menu-screen').style.display = 'flex';
+        });
+
+        // Callback chamado pelo menu ao clicar em Jogar
+        window._startGameCallback = () => {
+            gameMode = window._gameMode || '3x3';
+
+            // Limpar estado antigo
+            projectiles.forEach(p => scene.remove(p.mesh));
+            projectiles.length = 0;
+
+            ammo = maxAmmo;
+            document.getElementById('ammo-count').textContent = `${ammo}/${maxAmmo}`;
+            document.getElementById('victory-message').style.display = 'none';
+            document.getElementById('death-message').style.display = 'none';
+
+            // Atualizar labels de UI conforme modo
+            if (gameMode === '5x5') {
+                document.getElementById('info-mode-text').textContent = 'Sambódromo da Tinta • Verde (você + 4) vs Rosa (5)';
+                document.getElementById('team-green-label').textContent = '🟢 TIME VERDE (você + 4)';
+                document.getElementById('team-pink-label').textContent = '🔴 TIME ROSA (5)';
+                // Expandir limites do mapa para 5x5
+                scene.fog = new THREE.Fog(0x7a9e7e, 40, 100);
+            } else {
+                document.getElementById('info-mode-text').textContent = 'Sambódromo da Tinta • Verde (você + 2) vs Rosa (3)';
+                document.getElementById('team-green-label').textContent = '🟢 TIME VERDE (você + 2)';
+                document.getElementById('team-pink-label').textContent = '🔴 TIME ROSA (3)';
+                scene.fog = new THREE.Fog(0x7a9e7e, 30, 70);
+            }
+
+            resetNPCs();
+
+            // Restaurar câmera
+            yaw = 0; pitch = 0;
+            camera.rotation.set(0, 0, 0);
+
+            // Iniciar loop se primeira vez
+            if (!window._animStarted) {
+                window._animStarted = true;
+                animate();
+            }
+        };
+
+        // --- ANIMAÇÃO ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            const delta = Math.min(clock.getDelta(), 0.1);
+            
+            updatePlayer(delta);
+            updateNPCs(delta);
+            updateProjectiles(delta);
+            
+            zoneTiles.forEach((tile, index) => {
+                tile.material.emissiveIntensity = 0.2 + Math.sin(Date.now() * 0.005 + index) * 0.1;
+            });
+            
+            // --- Animação da arma FPS ---
+            if (player.alive) {
+                fpsWeaponGroup.visible = true;
+
+                const isMoving = Math.abs(player.velocity.x) + Math.abs(player.velocity.z) > 0.5;
+
+                // Balanço ao andar (walk bob)
+                if (isMoving && player.onGround) {
+                    walkBobTime += delta * 8;
+                } else {
+                    walkBobTime += delta * 1.5;
+                }
+                const bobX = Math.sin(walkBobTime * 0.5) * (isMoving ? 0.012 : 0.003);
+                const bobY = Math.abs(Math.sin(walkBobTime)) * (isMoving ? 0.018 : 0.004);
+
+                // Recuo (recoil)
+                let recoilZ = 0;
+                let recoilY = 0;
+                if (recoilActive) {
+                    recoilAnim += delta * 14;
+                    if (recoilAnim < Math.PI) {
+                        recoilZ = Math.sin(recoilAnim) * 0.06;
+                        recoilY = Math.sin(recoilAnim) * 0.025;
+                    } else {
+                        recoilActive = false;
+                        recoilAnim = 0;
+                    }
+                }
+
+                fpsWeaponGroup.position.set(
+                    0.30 + bobX,
+                    -0.32 - bobY + recoilY,
+                    -0.65 + recoilZ
+                );
+                fpsWeaponGroup.rotation.set(
+                    0.08 - recoilY * 0.8,
+                    -0.20,
+                    0.0
+                );
+            } else {
+                fpsWeaponGroup.visible = false;
+            }
+
+            // Renderizar cena principal
+            renderer.clear();
+            renderer.render(scene, camera);
+
+            // Renderizar arma FPS por cima (sem depth test da cena anterior)
+            renderer.clearDepth();
+            renderer.render(weaponScene, weaponCamera);
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            weaponCamera.aspect = window.innerWidth / window.innerHeight;
+            weaponCamera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
